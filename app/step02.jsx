@@ -1,147 +1,181 @@
-import React, { useState } from 'react';
-import { View, Image, Text, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ImageBackground, Alert, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { 
+  FadeIn, FadeInUp, SlideInRight, ZoomIn
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import StepHeader from '../components/StepHeader';
-import ItemTray from '../components/ItemTray';
-import DropZone from '../components/DropZone';
 import SuccessOverlay from '../components/SuccessOverlay';
 import StepNavigation from '../components/StepNavigation';
 import { useGame } from '../context/GameContext';
 
-const TRAY_ITEMS = [
-  { id: 'plastic', name: 'Plastic Sheet', icon: require('../assets/images/plastic.png'), type: 'image' },
-  { id: 'sheet', name: 'Clean Sheet', icon: require('../assets/images/clean_sheet.png'), type: 'image' },
-  { id: 'towel', name: 'Towel', icon: require('../assets/images/towel.png'), type: 'image' },
+const SCENE_PROGRESSION = [
+  {
+    id: 'clean_bed',
+    image: require('../assets/images/CleanBed.png'),
+    instruction: 'The bed is clean. Now lay the plastic sheet to protect against fluids.',
+    actionLabel: 'LAY PLASTIC SHEET',
+    tipText: 'Plastic protects mattress from fluids during delivery.',
+  },
+  {
+    id: 'plastic_on',
+    image: require('../assets/images/CovewithPlastics.png'),
+    instruction: 'Plastic sheet placed! Now cover with a clean sheet.',
+    actionLabel: 'COVER WITH CLEAN SHEET',
+    tipText: 'The clean sheet goes on top of plastic for hygiene.',
+  },
+  {
+    id: 'sheet_on',
+    image: require('../assets/images/CoverWithSheet.png'),
+    instruction: 'Sheet is on! Finally, place a towel for absorbing fluids.',
+    actionLabel: 'ADD TOWEL ON TOP',
+    tipText: 'Towels absorb fluids and provide a soft surface.',
+  },
+  {
+    id: 'towel_on',
+    image: require('../assets/images/AddTowel.png'),
+    instruction: 'All layers placed correctly! Bed is ready.',
+    actionLabel: null,
+    tipText: 'Layer order: Plastic → Sheet → Towel.',
+  },
 ];
 
 export default function Step02() {
   const router = useRouter();
   const { addScore, score, markStepComplete } = useGame();
-  
-  const [itemsPlaced, setItemsPlaced] = useState([]);
-  const [activeDropZone, setActiveDropZone] = useState(null);
+  const [sceneIndex, setSceneIndex] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
 
-  const nextRequiredItem = 
-    itemsPlaced.length === 0 ? 'plastic' :
-    itemsPlaced.length === 1 ? 'sheet' :
-    itemsPlaced.length === 2 ? 'towel' : null;
+  const scene = SCENE_PROGRESSION[sceneIndex];
+  const isDone = sceneIndex === SCENE_PROGRESSION.length - 1;
 
-  const handleProximity = (itemId, posX, posY) => {
-    const isOverBed = posY > 200 && posY < 600;
-    setActiveDropZone(prev => isOverBed ? 'bed' : null);
-  };
+  const handleAction = useCallback(() => {
+    if (transitioning || isDone) return;
 
-  const handleDrop = (itemId, posX, posY) => {
-    const isOverBed = posY > 200 && posY < 600;
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch(e) {}
+    setTransitioning(true);
+    addScore(50);
 
-    if (isOverBed) {
-      if (itemId === nextRequiredItem) {
-        const newPlaced = [...itemsPlaced, itemId];
-        setItemsPlaced(newPlaced);
-        addScore(50);
-        setActiveDropZone(null);
-        
-        if (newPlaced.length === 3) {
-          setTimeout(() => setShowSuccess(true), 1200);
-        }
-        return true;
-      } else {
-        Alert.alert(
-          '⚠️ Wrong Order!',
-          'Lay the plastic sheet down first!\nIt protects the surface underneath from fluids during delivery.',
-          [{ text: 'OK' }]
-        );
+    setTimeout(() => {
+      const nextIndex = sceneIndex + 1;
+      setSceneIndex(nextIndex);
+      setTransitioning(false);
+
+      if (nextIndex === SCENE_PROGRESSION.length - 1) {
+        setTimeout(() => setShowSuccess(true), 800);
       }
-    }
-    return false;
-  };
+    }, 300);
+  }, [sceneIndex, transitioning, isDone]);
 
   return (
-    <View className="flex-1 bg-blue-50">
-      <StepHeader 
-        step={2} 
-        score={score}
-        instruction={itemsPlaced.length === 3 ? "All items placed!" : `Step ${itemsPlaced.length + 1}: Place the ${nextRequiredItem === 'plastic' ? 'Plastic Sheet' : nextRequiredItem === 'sheet' ? 'Clean Sheet' : 'Towel'} onto the bed.`} 
-      />
+    <View style={{ flex: 1, backgroundColor: '#111' }}>
+      <StatusBar barStyle="light-content" />
 
-      <View className="flex-1 items-center justify-center mb-60 relative">
-        <DropZone id="bed" activeZoneId={activeDropZone} style={{ width: 350, height: 280 }}>
-          <View className="items-center justify-center">
-            {/* Base Bed */}
-            <Image 
-                source={require('../assets/images/home_bed.png')}
-                style={{ width: 350, height: 250 }}
-                resizeMode="contain"
-            />
+      {/* Full-screen background */}
+      {SCENE_PROGRESSION.map((s, i) => (
+        i === sceneIndex && (
+          <Animated.View 
+            key={s.id} 
+            entering={FadeIn.duration(600)} 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
+          >
+            <ImageBackground source={s.image} style={{ flex: 1 }} resizeMode="cover" />
+          </Animated.View>
+        )
+      ))}
 
-            {/* Layer 1: Plastic — positioned at bed surface, semi-transparent */}
-            {itemsPlaced.includes('plastic') && (
-              <Animated.View entering={FadeIn} style={{ position: 'absolute', top: 55, zIndex: 1 }}>
-                <Image 
-                    source={require('../assets/images/plastic.png')}
-                    style={{ width: 280, height: 130, opacity: 0.6 }}
-                    resizeMode="cover"
-                />
-              </Animated.View>
-            )}
+      {/* Dark overlays */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 150, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.5)' }} />
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 310, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.65)' }} />
 
-            {/* Layer 2: Sheet — slightly smaller, sits on top of plastic */}
-            {itemsPlaced.includes('sheet') && (
-              <Animated.View entering={FadeIn} style={{ position: 'absolute', top: 60, zIndex: 2 }}>
-                <Image 
-                    source={require('../assets/images/clean_sheet.png')}
-                    style={{ width: 250, height: 120, opacity: 0.85 }}
-                    resizeMode="cover"
-                />
-              </Animated.View>
-            )}
+      <SafeAreaView style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }}>
+        <StepHeader step={2} score={score} instruction="" />
 
-            {/* Layer 3: Towel — smallest, center of bed */}
-            {itemsPlaced.includes('towel') && (
-              <Animated.View entering={FadeIn} style={{ position: 'absolute', top: 70, zIndex: 3 }}>
-                <Image 
-                    source={require('../assets/images/towel.png')}
-                    style={{ width: 180, height: 90 }}
-                    resizeMode="contain"
-                />
-              </Animated.View>
-            )}
-          </View>
-        </DropZone>
-        
-        <View className="absolute bottom-[-20] items-center">
-             <Text className="text-gray-400 font-bold mb-2 uppercase tracking-widest text-xs">Requirement Order</Text>
-             <View className="flex-row space-x-2">
-                 {['Plastic', 'Sheet', 'Towel'].map((name, i) => (
-                    <View key={i} className={`px-3 py-1 rounded-full ${itemsPlaced.length > i ? 'bg-green-100 border-green-200' : 'bg-gray-100 border-gray-200'} border`}>
-                        <Text className={`text-[10px] ${itemsPlaced.length > i ? 'text-green-700' : 'text-gray-400'}`}>{name}</Text>
-                    </View>
-                 ))}
-             </View>
+        {/* Center badge */}
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          {isDone && (
+            <Animated.View entering={ZoomIn.springify()} style={{
+              backgroundColor: 'rgba(16,185,129,0.9)', paddingHorizontal: 24, paddingVertical: 14,
+              borderRadius: 20, borderWidth: 2, borderColor: '#A7F3D0',
+            }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18, letterSpacing: 2 }}>BED READY</Text>
+            </Animated.View>
+          )}
         </View>
-      </View>
 
-      <ItemTray 
-        items={TRAY_ITEMS} 
-        usedItems={itemsPlaced}
-        onDrop={handleDrop}
-        onProximity={handleProximity} 
-      />
+        {/* Bottom area */}
+        <View style={{ paddingHorizontal: 20, paddingBottom: 80 }}>
+          {/* Layer order progress */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 14, gap: 8 }}>
+            {['Plastic', 'Sheet', 'Towel'].map((name, i) => (
+              <View key={i} style={{ 
+                paddingHorizontal: 16, paddingVertical: 6, borderRadius: 14,
+                backgroundColor: sceneIndex > i ? 'rgba(16,185,129,0.9)' : 'rgba(255,255,255,0.15)',
+                borderWidth: 1.5, borderColor: sceneIndex > i ? '#A7F3D0' : 'rgba(255,255,255,0.2)',
+              }}>
+                <Text style={{ fontSize: 11, fontWeight: '800', color: '#FFFFFF', letterSpacing: 1 }}>{name}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Instruction */}
+          <Animated.View 
+            key={`instr-${sceneIndex}`}
+            entering={SlideInRight.duration(400)} 
+            style={{ 
+              backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 20, padding: 18,
+              marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+            }}
+          >
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 24 }}>
+              {scene.instruction}
+            </Text>
+            {scene.tipText && (
+              <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 8, fontStyle: 'italic' }}>
+                {scene.tipText}
+              </Text>
+            )}
+          </Animated.View>
+
+          {/* Action button */}
+          {scene.actionLabel && (
+            <Animated.View entering={FadeInUp.delay(200).duration(400)}>
+              <TouchableOpacity 
+                onPress={handleAction}
+                disabled={transitioning}
+                activeOpacity={0.85}
+                style={{
+                  backgroundColor: transitioning ? '#6B7280' : '#2563EB',
+                  borderRadius: 18, paddingVertical: 18, alignItems: 'center',
+                  borderBottomWidth: 4, borderBottomColor: transitioning ? '#4B5563' : '#1D4ED8',
+                  shadowColor: '#2563EB', shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.4, shadowRadius: 12,
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 2 }}>
+                  {scene.actionLabel}
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </View>
+
+        <StepNavigation currentStep={2} />
+      </SafeAreaView>
 
       {showSuccess && (
         <SuccessOverlay 
-          message="Area prepared correctly! Order followed: Plastic → Sheet → Towel." 
+          message="Bed layered correctly! Plastic → Sheet → Towel. Ready for positioning." 
           onComplete={() => {
             setShowSuccess(false);
             markStepComplete(2);
           }} 
         />
       )}
-
-      <StepNavigation currentStep={2} />
     </View>
   );
 }
