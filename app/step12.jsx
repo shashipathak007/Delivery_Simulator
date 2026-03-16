@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable } from 'react-native';
 import Animated, { FadeInUp, SlideInRight, ZoomIn, BounceIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import GameStep from '../components/GameStep';
@@ -21,6 +21,8 @@ export default function Step12() {
   const scene = SCENE_PROGRESSION[sceneIndex];
   const isDone = sceneIndex === 3;
 
+  const isScreenTapInteractive = sceneIndex === 1 || sceneIndex === 2;
+
   const handleAction = useCallback(() => {
     if (transitioning || isDone) return;
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
@@ -39,6 +41,14 @@ export default function Step12() {
 
   return (
     <GameStep step={12} score={score} scenes={SCENE_PROGRESSION} sceneIndex={sceneIndex} isDone={isDone} showConfetti={isDone}>
+      {/* Tap-anywhere interaction for RUB BACK and TAP FEET (keeps header usable) */}
+      {isScreenTapInteractive && (
+        <Pressable
+          onPress={handleAction}
+          disabled={transitioning || isDone}
+          style={{ position: 'absolute', left: 0, right: 0, top: 110, bottom: 0, zIndex: 4 }}
+        />
+      )}
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
         {sceneIndex === 1 && (
           <Animated.View entering={ZoomIn} style={{ backgroundColor: 'rgba(37,99,235,0.9)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 2, borderColor: '#93C5FD' }}>
@@ -63,7 +73,7 @@ export default function Step12() {
         <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 14 }}>
           <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>
         </Animated.View>
-        {scene.actionLabel && (
+        {scene.actionLabel && !isScreenTapInteractive && (
           <Animated.View entering={FadeInUp.delay(100)}>
             <TouchableOpacity onPress={handleAction} disabled={transitioning} activeOpacity={0.7}
               style={{ backgroundColor: transitioning ? '#6B7280' : (sceneIndex === 2 ? '#EC4899' : '#2563EB'), borderRadius: 18, paddingVertical: 20, alignItems: 'center', shadowColor: sceneIndex === 2 ? '#EC4899' : '#2563EB', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12 }}>

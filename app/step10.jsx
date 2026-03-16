@@ -31,11 +31,16 @@ export default function Step10() {
     }, 400);
   }, [sceneIndex, transitioning, isDone]);
 
+  const scenes = SCENE_PROGRESSION.map(s => ({
+    ...s,
+    resizeMode: 'contain',
+  }));
+
   return (
     <GameStep 
       step={10} 
       score={score} 
-      scenes={SCENE_PROGRESSION} 
+      scenes={scenes} 
       sceneIndex={sceneIndex} 
       isDone={isDone} 
       showConfetti={isDone}

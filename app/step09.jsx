@@ -45,11 +45,16 @@ export default function Step09() {
     return '#2563EB';
   };
 
+  const scenes = SCENE_PROGRESSION.map(s => ({
+    ...s,
+    resizeMode: 'contain',
+  }));
+
   return (
     <GameStep 
       step={9} 
       score={score} 
-      scenes={SCENE_PROGRESSION} 
+      scenes={scenes} 
       sceneIndex={sceneIndex} 
       isDone={isDone} 
       showConfetti={isDone}

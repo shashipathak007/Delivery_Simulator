@@ -100,7 +100,7 @@ export default function GameStep({
         {topContent}
 
         {/* Children (center area + bottom panel) */}
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
+       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginBottom:300  }} pointerEvents="none">
           {isDone && (
             <Animated.View entering={BounceIn.delay(200)} style={{ 
               backgroundColor: 'rgba(16,185,129,0.95)', 

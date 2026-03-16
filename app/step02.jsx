@@ -102,14 +102,16 @@ export default function Step02() {
       statusTitle="BED READY"
       statusDetail="SAFE & CLEAN"
       topContent={
-        <ItemTray
-          items={TRAY_ITEMS}
-          usedItems={usedItems}
-          lockedItems={lockedItems}
-          onDrop={handleDrop}
-          onProximity={handleProximity}
-          position="top"
-        />
+        isDone ? null : (
+          <ItemTray
+            items={TRAY_ITEMS}
+            usedItems={usedItems}
+            lockedItems={lockedItems}
+            onDrop={handleDrop}
+            onProximity={handleProximity}
+            position="top"
+          />
+        )
       }
     >
       {/* Massive Drop Zone */}

@@ -163,14 +163,16 @@ export default function Step03() {
       statusTitle="HANDS STERILE"
       statusDetail="SAFE TO ASSIST"
       topContent={
-        <ItemTray
-          items={TRAY_ITEMS}
-          usedItems={usedItems}
-          lockedItems={lockedItems}
-          onDrop={handleDrop}
-          onProximity={handleProximity}
-          position="top"
-        />
+        isDone ? null : (
+          <ItemTray
+            items={TRAY_ITEMS}
+            usedItems={usedItems}
+            lockedItems={lockedItems}
+            onDrop={handleDrop}
+            onProximity={handleProximity}
+            position="top"
+          />
+        )
       }
     >
       {/* Large Drop Zone */}
