@@ -24,11 +24,21 @@ export function InventoryProvider({ children }) {
   };
 
   const markItemCollected = (itemId) => {
-    setCollectedItems((prev) => [...prev, itemId]);
+    setCollectedItems((prev) => {
+      if (prev.find(i => (i.id === itemId || i === itemId))) return prev;
+      return [...prev, itemId];
+    });
+  };
+
+  const addToInventory = (item) => {
+    setCollectedItems((prev) => {
+      if (prev.find(i => i.id === item.id)) return prev;
+      return [...prev, item];
+    });
   };
 
   const hasCollected = (itemId) => {
-    return collectedItems.includes(itemId);
+    return collectedItems.some(i => (i.id === itemId || i === itemId));
   };
 
   const resetInventory = () => {
@@ -39,7 +49,7 @@ export function InventoryProvider({ children }) {
   return (
     <InventoryContext.Provider value={{
       usedItems, markItemUsed, hasItemBeenUsed,
-      collectedItems, markItemCollected, hasCollected,
+      collectedItems, markItemCollected, addToInventory, hasCollected,
       resetInventory
     }}>
       {children}

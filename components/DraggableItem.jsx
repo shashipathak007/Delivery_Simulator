@@ -10,6 +10,7 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function DraggableItem({ item, dropZones, onDrop, onProximity, isUsed, isLocked }) {
   const dragX = useSharedValue(0);
@@ -97,29 +98,31 @@ export default function DraggableItem({ item, dropZones, onDrop, onProximity, is
   return (
     <GestureDetector gesture={panGesture}>
       <Animated.View style={[itemStyle, styles.container]} className="items-center justify-center p-2 mb-2">
-        <View className="bg-white rounded-2xl w-16 h-16 items-center justify-center shadow-md border border-gray-100">
+        <View className="rounded-2xl w-16 h-16 items-center justify-center shadow-md border" style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)' }}>
           {item.type === 'image' ? (
             <Image 
               source={item.icon} 
               style={{ width: 40, height: 40 }} 
               resizeMode="contain" 
             />
+          ) : item.type === 'icon' ? (
+            <MaterialCommunityIcons name={item.icon} size={40} color="#E5E7EB" />
           ) : (
-            <Text className="text-3xl">{item.icon}</Text>
+            <Text className="text-3xl text-white">{item.icon}</Text>
           )}
           
           {isUsed && (
             <View className="absolute inset-0 bg-black/10 rounded-2xl items-center justify-center">
-              <Text className="text-2xl">✅</Text>
+              <MaterialCommunityIcons name="check-circle" size={28} color="#22c55e" />
             </View>
           )}
           {isLocked && (
-            <View className="absolute inset-0 bg-black/10 rounded-2xl items-center justify-center">
-              <Text className="text-xl">🔒</Text>
+            <View className="absolute inset-0 bg-black/40 rounded-2xl items-center justify-center">
+              <MaterialCommunityIcons name="lock" size={24} color="#9CA3AF" />
             </View>
           )}
         </View>
-        <Text className="text-xs text-gray-600 mt-1 font-medium">{item.name}</Text>
+        <Text style={{ color: 'rgba(255,255,255,0.8)' }} className="text-xs mt-1 font-bold text-center w-full" numberOfLines={2}>{item.name}</Text>
       </Animated.View>
     </GestureDetector>
   );

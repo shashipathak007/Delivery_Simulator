@@ -1,151 +1,120 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Image, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ImageBackground, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn, ZoomIn, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeIn, FadeInUp, SlideInRight, ZoomIn } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import StepHeader from '../components/StepHeader';
-import ItemTray from '../components/ItemTray';
-import DropZone from '../components/DropZone';
 import SuccessOverlay from '../components/SuccessOverlay';
 import StepNavigation from '../components/StepNavigation';
 import { useGame } from '../context/GameContext';
 
-const TRAY_ITEMS = [
-  { id: 'baby', name: 'Baby', icon: require('../assets/images/baby.png'), type: 'image' },
+const FACTS = [
+  "Skin-to-skin contact regulates the baby's heart rate and temperature.",
+  "Early latching helps the uterus contract and limits bleeding.",
+  "Colostrum (first milk) provides essential antibodies for immunity.",
+  "Do not force the baby. They often instinctively crawl to the breast.",
 ];
 
 export default function Step17() {
   const router = useRouter();
   const { addScore, score, markStepComplete } = useGame();
   
-  const [babyFed, setBabyFed] = useState(false);
-  const [timer, setTimer] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(15);
   const [factIndex, setFactIndex] = useState(0);
-  const [activeDropZone, setActiveDropZone] = useState(null);
+  const [isLatching, setIsLatching] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const completedRef = useRef(false);
-
-  const facts = [
-    "Colostrum is the first milk, full of antibodies.",
-    "Early breastfeeding helps the uterus contract.",
-    "Skin-to-skin contact regulates baby's temperature."
-  ];
-
-  const heartScale = useSharedValue(1);
 
   useEffect(() => {
-    let interval;
-    if (babyFed && timer > 0) {
-      interval = setInterval(() => {
-        setTimer(t => t - 1);
-      }, 300); 
-      
-      heartScale.value = withRepeat(
-          withSequence(withTiming(1.3, { duration: 500 }), withTiming(1, { duration: 500 })),
-          -1,
-          true
-      );
-    } else if (babyFed && timer === 0 && !completedRef.current) {
-      completedRef.current = true;
+    let timer;
+    if (isLatching && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+        if (timeLeft % 4 === 0) {
+          setFactIndex((prev) => (prev + 1) % FACTS.length);
+        }
+      }, 300); // Accelerated for simulation
+    } else if (isLatching && timeLeft === 0) {
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch(e) {}
       addScore(100);
-      setTimeout(() => setShowSuccess(true), 1200);
+      setShowSuccess(true);
     }
+    return () => clearInterval(timer);
+  }, [isLatching, timeLeft]);
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [babyFed, timer]);
-
-  useEffect(() => {
-    if (timer % 10 === 0 && timer !== 30 && babyFed) {
-      setFactIndex(i => (i + 1) % facts.length);
-    }
-  }, [timer]);
-
-  const handleProximity = (itemId, posX, posY) => {
-    const isOverChest = posY > 200 && posY < 550;
-    setActiveDropZone(prev => isOverChest ? 'chest' : null);
+  const handleLatch = () => {
+    if (isLatching) return;
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch(e) {}
+    setIsLatching(true);
   };
-
-  const handleDrop = (itemId, posX, posY) => {
-    const isOverChest = posY > 200 && posY < 550;
-
-    if (isOverChest && itemId === 'baby' && !babyFed) {
-      setBabyFed(true);
-      setActiveDropZone(null);
-      return true;
-    }
-    return false;
-  };
-
-  const heartStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: heartScale.value }],
-      opacity: babyFed ? 1 : 0
-  }));
 
   return (
-    <View className="flex-1 bg-pink-50">
-      <StepHeader 
-        step={17} 
-        score={score}
-        instruction={!babyFed ? "Position the baby for the first feeding" : `Feeding in progress... (${timer}min units)`} 
-      />
+    <View style={{ flex: 1, backgroundColor: '#111' }}>
+      <StatusBar barStyle="light-content" />
 
-      <View className="flex-1 items-center justify-center p-8 mb-60 relative">
-        <DropZone id="chest" activeZoneId={activeDropZone} style={{ width: 340, height: 440 }}>
-          <View className="items-center justify-center">
-             <Image 
-                source={require('../assets/images/mother.png')}
-                style={{ width: 340, height: 340 }}
-                resizeMode="contain"
-             />
-             
-             {babyFed && (
-               <Animated.View entering={ZoomIn} style={{ position: 'absolute', top: 80, left: 40, zIndex: 10 }}>
-                 <View className="bg-pink-100 rounded-full w-28 h-40 items-center justify-center shadow-2xl border-4 border-white" style={{ transform: [{ rotate: '-35deg' }] }}>
-                    <Image source={require('../assets/images/baby.png')} style={{ width: 60, height: 60 }} resizeMode="contain" />
-                 </View>
-               </Animated.View>
-             )}
+      <Animated.View entering={FadeIn.duration(500)} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
+        <ImageBackground source={require('../assets/images/PutOnMothersChest.png')} style={{ flex: 1 }} resizeMode="cover" />
+      </Animated.View>
 
-             <Animated.View style={[heartStyle, { position: 'absolute', top: 40, right: 60, zIndex: 20 }]}>
-                <Text className="text-6xl">❤️</Text>
-             </Animated.View>
-          </View>
-        </DropZone>
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 150, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.5)' }} />
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 320, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.8)' }} />
 
-        {babyFed && timer > 0 && (
-          <Animated.View entering={FadeIn} className="absolute bottom-[-10] bg-white/95 p-6 rounded-[35px] shadow-2xl border-4 border-pink-100 w-[350px]">
-            <View className="flex-row items-center mb-3">
-                <Text className="text-2xl mr-3">💡</Text>
-                <Text className="font-black text-pink-700 text-lg uppercase tracking-widest">Medical Fact</Text>
-            </View>
-            <Text className="text-gray-800 leading-6 text-base font-bold italic">"{facts[factIndex]}"</Text>
-            <View className="mt-4 h-1 bg-pink-100 rounded-full overflow-hidden">
-                 <View className="h-full bg-pink-500" style={{ width: `${(30 - timer) / 30 * 100}%` }} />
-            </View>
+      <SafeAreaView style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }}>
+        <StepHeader step={17} score={score} instruction="" />
+
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          {isLatching && timeLeft > 0 && (
+            <Animated.View entering={ZoomIn.springify()} style={{ alignItems: 'center' }}>
+              <View style={{ backgroundColor: 'rgba(236,72,153,0.95)', paddingHorizontal: 36, paddingVertical: 20, borderRadius: 24, borderWidth: 3, borderColor: '#F9A8D4', alignItems: 'center', shadowColor: '#EC4899', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 15 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, letterSpacing: 2 }}>NURSING TIME</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 36, letterSpacing: 2, marginTop: 4 }}>{timeLeft}m</Text>
+              </View>
+            </Animated.View>
+          )}
+
+          {timeLeft === 0 && (
+            <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(16,185,129,0.9)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 20, borderWidth: 2, borderColor: '#A7F3D0' }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18, letterSpacing: 2 }}>SUCCESSFUL LATCH</Text>
+            </Animated.View>
+          )}
+        </View>
+
+        <View style={{ paddingHorizontal: 20, paddingBottom: 80 }}>
+          
+          <Animated.View entering={SlideInRight.duration(400)} 
+            style={{ backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 20, padding: 18, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+            <Text style={{ color: '#F9A8D4', fontSize: 14, fontWeight: '900', textAlign: 'center', letterSpacing: 2, marginBottom: 6 }}>
+              DID YOU KNOW?
+            </Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700', textAlign: 'center', lineHeight: 24, fontStyle: 'italic' }}>
+              "{FACTS[factIndex]}"
+            </Text>
           </Animated.View>
-        )}
-      </View>
 
-      <ItemTray 
-        items={TRAY_ITEMS} 
-        usedItems={babyFed ? ['baby'] : []}
-        onDrop={handleDrop}
-        onProximity={handleProximity} 
-      />
+          {!isLatching && (
+            <Animated.View entering={FadeInUp.delay(200).duration(400)}>
+              <TouchableOpacity onPress={handleLatch} activeOpacity={0.85}
+                style={{ 
+                  backgroundColor: '#EC4899', borderRadius: 16, paddingVertical: 20, alignItems: 'center',
+                  borderBottomWidth: 4, borderBottomColor: '#BE185D',
+                  shadowColor: '#EC4899', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.5, shadowRadius: 12,
+                }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 1.5 }}>
+                  BEGIN FIRST FEEDING
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </View>
+
+        <StepNavigation currentStep={17} />
+      </SafeAreaView>
 
       {showSuccess && (
-        <SuccessOverlay 
-          message="First feeding successful! Mother and baby are bonding." 
-          onComplete={() => {
-            setShowSuccess(false);
-            markStepComplete(17);
-          }} 
-        />
+        <SuccessOverlay message="Simulation Complete! The mother and baby are stable and resting." 
+          onComplete={() => { setShowSuccess(false); markStepComplete(17); router.push('/complete'); }} />
       )}
-
-      <StepNavigation currentStep={17} />
     </View>
   );
 }

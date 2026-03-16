@@ -5,7 +5,7 @@ import { useGame } from '../context/GameContext';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const STEP_ALERTS = {
-  1: "Call for help FIRST before anything else!\nMedical help must be on the way even if you have to deliver the baby yourself.",
+  1: "You must prepare the room first!\nMake sure it is clean, warm, and well-lit.",
   2: "Lay the plastic sheet down first!\nIt protects the surface underneath from fluids during delivery.",
   3: "Add soap first! Washing without soap does not remove dangerous bacteria that can infect the mother and baby.",
   4: "You are missing items! You need everything ready before delivery starts.\nYou cannot leave mama to find things once baby starts coming!",
@@ -22,10 +22,9 @@ const STEP_ALERTS = {
   15: "Keep massaging! The uterus must feel firm like a ball.\nA soft uterus means dangerous bleeding can start at any time.",
   16: "Cover the baby immediately!\nNewborns lose body heat very fast and hypothermia can be fatal within minutes in cold conditions.",
   17: "Breastfeed within the first hour!\nColostrum is the baby's first vaccine.\nIt protects from infection and helps stop mother's bleeding.",
-  18: "You must go to hospital even after a successful home birth!\nBaby needs vaccinations and checks, mother needs examination.\nThis is not optional!",
 };
 
-export default function StepNavigation({ currentStep, totalSteps = 18 }) {
+export default function StepNavigation({ currentStep, totalSteps = 17 }) {
   const router = useRouter();
   const { isStepComplete } = useGame();
 
@@ -72,9 +71,7 @@ export default function StepNavigation({ currentStep, totalSteps = 18 }) {
         paddingHorizontal: 20,
         paddingBottom: 36,
         paddingTop: 16,
-        backgroundColor: 'rgba(255,255,255,0.97)',
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
+        backgroundColor: 'transparent',
         zIndex: 200,
       }}
     >
@@ -86,25 +83,25 @@ export default function StepNavigation({ currentStep, totalSteps = 18 }) {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: isFirst ? '#F3F4F6' : '#EFF6FF',
+          backgroundColor: isFirst ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
           paddingHorizontal: 20,
           paddingVertical: 14,
           borderRadius: 50,
-          borderWidth: 2,
-          borderColor: isFirst ? '#E5E7EB' : '#BFDBFE',
+          borderWidth: 1,
+          borderColor: isFirst ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.3)',
           opacity: isFirst ? 0.5 : 1,
         }}
       >
-        <Text style={{ fontSize: 18, marginRight: 6, color: isFirst ? '#9CA3AF' : '#2563EB' }}>◀</Text>
-        <Text style={{ fontWeight: '800', color: isFirst ? '#9CA3AF' : '#2563EB', fontSize: 15, letterSpacing: 1 }}>PREV</Text>
+        <Text style={{ fontSize: 18, marginRight: 6, color: '#FFFFFF' }}>◀</Text>
+        <Text style={{ fontWeight: '800', color: '#FFFFFF', fontSize: 14, letterSpacing: 1 }}>PREV</Text>
       </TouchableOpacity>
 
       {/* Step indicator */}
       <View style={{ alignItems: 'center' }}>
         {completed && (
-          <Text style={{ fontSize: 12, color: '#22C55E', fontWeight: '800', letterSpacing: 2, marginBottom: 2 }}>✓ DONE</Text>
+          <Text style={{ fontSize: 12, color: '#22C55E', fontWeight: '900', letterSpacing: 2, marginBottom: 2 }}>✓ DONE</Text>
         )}
-        <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '700', letterSpacing: 2 }}>
+        <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: '800', letterSpacing: 2 }}>
           {currentStep}/{totalSteps}
         </Text>
       </View>
@@ -116,12 +113,13 @@ export default function StepNavigation({ currentStep, totalSteps = 18 }) {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: completed ? '#22C55E' : '#F59E0B',
-          paddingHorizontal: 20,
+          backgroundColor: completed ? '#10B981' : '#F59E0B',
+          paddingHorizontal: 22,
           paddingVertical: 14,
           borderRadius: 50,
           borderBottomWidth: 4,
-          borderBottomColor: completed ? '#16A34A' : '#D97706',
+          borderBottomColor: completed ? '#059669' : '#D97706',
+          shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 6,
         }}
       >
         <Text style={{ fontWeight: '800', color: '#FFFFFF', fontSize: 15, letterSpacing: 1 }}>

@@ -1,38 +1,54 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ImageBackground, Alert, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, ImageBackground, Alert, StatusBar, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { 
-  FadeIn, FadeInUp, SlideInRight, ZoomIn
+  FadeIn, FadeInUp, SlideInRight, ZoomIn, 
+  useSharedValue, useAnimatedStyle, withTiming, withRepeat
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StepHeader from '../components/StepHeader';
 import SuccessOverlay from '../components/SuccessOverlay';
 import StepNavigation from '../components/StepNavigation';
+import ItemTray from '../components/ItemTray';
+import DropZone from '../components/DropZone';
 import { useGame } from '../context/GameContext';
+
+const { width, height } = Dimensions.get('window');
+
+const TRAY_ITEMS = [
+  { id: 'plastic', name: 'Plastic', type: 'image', icon: require('../assets/images/plastic.png') },
+  { id: 'sheet', name: 'Sheet', type: 'image', icon: require('../assets/images/clean_sheet.png') },
+  { id: 'towel', name: 'Towel', type: 'image', icon: require('../assets/images/towel.png') }
+];
 
 const SCENE_PROGRESSION = [
   {
     id: 'clean_bed',
     image: require('../assets/images/CleanBed.png'),
-    instruction: 'The bed is clean. Now lay the plastic sheet to protect against fluids.',
-    actionLabel: 'LAY PLASTIC SHEET',
+    instruction: 'The bed is clean. Now drag the PLASTIC SHEET to protect against fluids.',
+    actionLabel: null,
     tipText: 'Plastic protects mattress from fluids during delivery.',
+    requiredItem: 'plastic',
   },
   {
     id: 'plastic_on',
     image: require('../assets/images/CovewithPlastics.png'),
-    instruction: 'Plastic sheet placed! Now cover with a clean sheet.',
-    actionLabel: 'COVER WITH CLEAN SHEET',
+    instruction: 'Plastic sheet placed! Now drag the CLEAN SHEET.',
+    actionLabel: null,
     tipText: 'The clean sheet goes on top of plastic for hygiene.',
+    requiredItem: 'sheet',
   },
   {
     id: 'sheet_on',
     image: require('../assets/images/CoverWithSheet.png'),
-    instruction: 'Sheet is on! Finally, place a towel for absorbing fluids.',
-    actionLabel: 'ADD TOWEL ON TOP',
+    instruction: 'Sheet is on! Finally, drag a TOWEL for absorbing fluids.',
+    actionLabel: null,
     tipText: 'Towels absorb fluids and provide a soft surface.',
+    requiredItem: 'towel',
   },
   {
     id: 'towel_on',
@@ -43,57 +59,141 @@ const SCENE_PROGRESSION = [
   },
 ];
 
+const PulsingIndicator = ({ icon = "gesture-double-tap" }) => {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(0.6);
+
+  React.useEffect(() => {
+    scale.value = withRepeat(withTiming(1.2, { duration: 1000 }), -1, true);
+    opacity.value = withRepeat(withTiming(0.1, { duration: 1000 }), -1, true);
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
+      <Animated.View style={[{ position: 'absolute', width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(255, 255, 255, 0.2)' }, animStyle]} />
+      <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.4)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' }}>
+        <MaterialCommunityIcons name={icon} size={28} color="#FFF" />
+      </View>
+    </View>
+  );
+};
+
 export default function Step02() {
   const router = useRouter();
   const { addScore, score, markStepComplete } = useGame();
   const [sceneIndex, setSceneIndex] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const [usedItems, setUsedItems] = useState([]);
+  const [activeDropZone, setActiveDropZone] = useState(null);
 
   const scene = SCENE_PROGRESSION[sceneIndex];
   const isDone = sceneIndex === SCENE_PROGRESSION.length - 1;
 
-  const handleAction = useCallback(() => {
-    if (transitioning || isDone) return;
+  const handleProximity = (itemId, x, y) => {
+    const targetX = width / 2;
+    const targetY = height / 2;
+    const distance = Math.sqrt(Math.pow(x - targetX, 2) + Math.pow(y - targetY, 2));
+    if (distance < 400) {
+      setActiveDropZone('bed');
+    } else {
+      setActiveDropZone(null);
+    }
+  };
 
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch(e) {}
-    setTransitioning(true);
-    addScore(50);
+  const handleDrop = (itemId, x, y) => {
+    if (transitioning || isDone) return false;
+    setActiveDropZone(null);
 
-    setTimeout(() => {
-      const nextIndex = sceneIndex + 1;
-      setSceneIndex(nextIndex);
-      setTransitioning(false);
+    const targetX = width / 2;
+    const targetY = height / 2;
+    const distance = Math.sqrt(Math.pow(x - targetX, 2) + Math.pow(y - targetY, 2));
 
-      if (nextIndex === SCENE_PROGRESSION.length - 1) {
-        setTimeout(() => setShowSuccess(true), 800);
+    if (distance < 400) {
+      if (scene.requiredItem === itemId) {
+        setTransitioning(true);
+        setUsedItems(prev => [...prev, itemId]);
+        addScore(50);
+        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch(e) {}
+        
+        setTimeout(() => {
+          const nextIndex = sceneIndex + 1;
+          setSceneIndex(nextIndex);
+          setTransitioning(false);
+          
+          if (nextIndex === SCENE_PROGRESSION.length - 1) {
+            // Automatically complete the step after 1.5s delay
+            setTimeout(() => {
+              markStepComplete(2);
+            }, 1500);
+          }
+        }, 300);
+        return true;
       }
-    }, 300);
-  }, [sceneIndex, transitioning, isDone]);
+    }
+    return false;
+  };
+
+  const lockedItems = TRAY_ITEMS.map(i => i.id).filter(id => {
+    if (scene.requiredItem && scene.requiredItem === id) return false;
+    return true; 
+  });
 
   return (
     <View style={{ flex: 1, backgroundColor: '#111' }}>
       <StatusBar barStyle="light-content" />
 
+      {/* Top Inventory Tray */}
+      <ItemTray 
+        items={TRAY_ITEMS}
+        usedItems={usedItems}
+        lockedItems={lockedItems}
+        onDrop={handleDrop}
+        onProximity={handleProximity}
+        position="top"
+      />
+
       {/* Full-screen background */}
       {SCENE_PROGRESSION.map((s, i) => (
-        i === sceneIndex && (
+        i <= sceneIndex && (
           <Animated.View 
             key={s.id} 
             entering={FadeIn.duration(600)} 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
+            style={{ position: 'absolute', top: -80, left: 0, right: 0, bottom: 0, zIndex: 1 }}
           >
-            <ImageBackground source={s.image} style={{ flex: 1 }} resizeMode="cover" />
+            <ImageBackground source={s.image} style={{ flex: 1, width: '100%', height: '115%' }} resizeMode="cover" />
           </Animated.View>
         )
       ))}
 
-      {/* Dark overlays */}
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 150, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.5)' }} />
-      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 310, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.65)' }} />
+      {/* Invisible Drop Zone overlay - Massive zone per user request */}
+      <View style={{ position: 'absolute', top: '15%', left: 0, width: '100%', height: '70%', zIndex: 10 }}>
+        {!isDone && <PulsingIndicator icon="tray-arrow-down" />}
+        <DropZone id="bed" activeZoneId={activeDropZone} style={{ flex: 1 }} />
+      </View>
 
-      <SafeAreaView style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }}>
-        <StepHeader step={2} score={score} instruction="" />
+      {/* Dark overlays */}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.9)', 'transparent']}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 160, zIndex: 2 }}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
+        locations={[0, 0.4, 1]}
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 280, zIndex: 2 }}
+        pointerEvents="none"
+      />
+
+      <SafeAreaView style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }} pointerEvents="box-none">
+        <View pointerEvents="none" style={{ marginTop: 110 }}>
+          <StepHeader step={2} score={score} instruction="" />
+        </View>
 
         {/* Center badge */}
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -107,29 +207,16 @@ export default function Step02() {
           )}
         </View>
 
-        {/* Bottom area */}
-        <View style={{ paddingHorizontal: 20, paddingBottom: 80 }}>
-          {/* Layer order progress */}
-          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 14, gap: 8 }}>
-            {['Plastic', 'Sheet', 'Towel'].map((name, i) => (
-              <View key={i} style={{ 
-                paddingHorizontal: 16, paddingVertical: 6, borderRadius: 14,
-                backgroundColor: sceneIndex > i ? 'rgba(16,185,129,0.9)' : 'rgba(255,255,255,0.15)',
-                borderWidth: 1.5, borderColor: sceneIndex > i ? '#A7F3D0' : 'rgba(255,255,255,0.2)',
-              }}>
-                <Text style={{ fontSize: 11, fontWeight: '800', color: '#FFFFFF', letterSpacing: 1 }}>{name}</Text>
-              </View>
-            ))}
-          </View>
-
+        <View style={{ paddingHorizontal: 20, paddingBottom: 110 }} pointerEvents="box-none">
           {/* Instruction */}
           <Animated.View 
             key={`instr-${sceneIndex}`}
             entering={SlideInRight.duration(400)} 
             style={{ 
-              backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 20, padding: 18,
-              marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+              backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20, padding: 18,
+              marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
             }}
+            pointerEvents="none"
           >
             <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 24 }}>
               {scene.instruction}
@@ -140,42 +227,14 @@ export default function Step02() {
               </Text>
             )}
           </Animated.View>
-
-          {/* Action button */}
-          {scene.actionLabel && (
-            <Animated.View entering={FadeInUp.delay(200).duration(400)}>
-              <TouchableOpacity 
-                onPress={handleAction}
-                disabled={transitioning}
-                activeOpacity={0.85}
-                style={{
-                  backgroundColor: transitioning ? '#6B7280' : '#2563EB',
-                  borderRadius: 18, paddingVertical: 18, alignItems: 'center',
-                  borderBottomWidth: 4, borderBottomColor: transitioning ? '#4B5563' : '#1D4ED8',
-                  shadowColor: '#2563EB', shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.4, shadowRadius: 12,
-                }}
-              >
-                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 2 }}>
-                  {scene.actionLabel}
-                </Text>
-              </TouchableOpacity>
-            </Animated.View>
-          )}
         </View>
 
-        <StepNavigation currentStep={2} />
+        <View pointerEvents="auto">
+          <StepNavigation currentStep={2} />
+        </View>
       </SafeAreaView>
 
-      {showSuccess && (
-        <SuccessOverlay 
-          message="Bed layered correctly! Plastic → Sheet → Towel. Ready for positioning." 
-          onComplete={() => {
-            setShowSuccess(false);
-            markStepComplete(2);
-          }} 
-        />
-      )}
+      {/* No success popups */}
     </View>
   );
 }

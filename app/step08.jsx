@@ -1,105 +1,82 @@
-import React, { useState } from 'react';
-import { View, Text, Image } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ImageBackground, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeIn, FadeInUp, SlideInRight, ZoomIn } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import StepHeader from '../components/StepHeader';
-import ItemTray from '../components/ItemTray';
-import DropZone from '../components/DropZone';
 import SuccessOverlay from '../components/SuccessOverlay';
 import StepNavigation from '../components/StepNavigation';
 import { useGame } from '../context/GameContext';
 
-const TRAY_ITEMS = [
-  { id: 'towel', name: 'Towel', icon: require('../assets/images/towel.png'), type: 'image' },
-];
-
 export default function Step08() {
   const router = useRouter();
   const { addScore, score, markStepComplete } = useGame();
-  
   const [towelPlaced, setTowelPlaced] = useState(false);
-  const [activeDropZone, setActiveDropZone] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleProximity = (itemId, posX, posY) => {
-    const isOverTarget = posY > 450 && posY < 700;
-    setActiveDropZone(prev => isOverTarget ? 'target' : null);
-  };
-
-  const handleDrop = (itemId, posX, posY) => {
-    const isOverTarget = posY > 450 && posY < 700;
-
-    if (isOverTarget && itemId === 'towel' && !towelPlaced) {
-      setTowelPlaced(true);
-      addScore(50);
-      setActiveDropZone(null);
-      setTimeout(() => setShowSuccess(true), 1200);
-      return true;
-    }
-    return false;
+  const handlePlaceTowel = () => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch(e) {}
+    setTowelPlaced(true);
+    addScore(50);
+    setTimeout(() => setShowSuccess(true), 800);
   };
 
   return (
-    <View className="flex-1 bg-blue-50">
-      <StepHeader 
-        step={8} 
-        score={score}
-        instruction={!towelPlaced ? "The head is appearing! Place a towel below immediately." : "Head supported! Proceed to check the baby."} 
-      />
+    <View style={{ flex: 1, backgroundColor: '#111' }}>
+      <StatusBar barStyle="light-content" />
 
-      <View className="flex-1 items-center justify-center p-8 mb-60 relative">
-        <DropZone id="target" activeZoneId={activeDropZone} style={{ width: 320, height: 400 }}>
-          <View className="items-center justify-center">
-             <Image 
-                source={require('../assets/images/mother.png')}
-                style={{ width: 300, height: 300 }}
-                resizeMode="contain"
-             />
-             
-             {/* Baby Crowning Visual */}
-             <View className="absolute bottom-[40px] items-center">
-                <Animated.View entering={ZoomIn} className="w-24 h-24 bg-[#FFDBAC] rounded-full border-4 border-[#E0AC69] items-center justify-center shadow-lg">
-                    <View className="w-4 h-1 bg-[#8D5524]/20 rounded-full mb-1" />
-                    <View className="flex-row space-x-2">
-                        <View className="w-1 h-1 bg-black/20 rounded-full" />
-                        <View className="w-1 h-1 bg-black/20 rounded-full" />
-                    </View>
-                </Animated.View>
-                <Text className="text-pink-500 font-bold mt-2 uppercase tracking-widest text-[10px]">Crowning</Text>
-             </View>
+      <Animated.View entering={FadeIn.duration(600)} 
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
+        <ImageBackground source={require('../assets/images/Crowning.png')} style={{ flex: 1 }} resizeMode="cover" />
+      </Animated.View>
 
-             {towelPlaced && (
-               <Animated.View entering={FadeIn} style={{ position: 'absolute', bottom: 15, zIndex: 10 }}>
-                 <Image 
-                    source={require('../assets/images/towel.png')}
-                    style={{ width: 180, height: 100 }}
-                    resizeMode="contain"
-                 />
-               </Animated.View>
-             )}
-          </View>
-        </DropZone>
-      </View>
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 150, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.55)' }} />
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 280, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)' }} />
 
-      <ItemTray 
-        items={TRAY_ITEMS} 
-        usedItems={towelPlaced ? ['towel'] : []}
-        onDrop={handleDrop}
-        onProximity={handleProximity} 
-      />
+      <SafeAreaView style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }}>
+        <StepHeader step={8} score={score} instruction="" />
+
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          {!towelPlaced && (
+            <Animated.View entering={ZoomIn} style={{ backgroundColor: 'rgba(236,72,153,0.9)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 20, borderWidth: 2, borderColor: '#F9A8D4' }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, letterSpacing: 2 }}>CROWNING</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 4, opacity: 0.8 }}>Baby's head is appearing</Text>
+            </Animated.View>
+          )}
+          {towelPlaced && (
+            <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(16,185,129,0.9)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 20, borderWidth: 2, borderColor: '#A7F3D0' }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, letterSpacing: 2 }}>HEAD SUPPORTED</Text>
+            </Animated.View>
+          )}
+        </View>
+
+        <View style={{ paddingHorizontal: 20, paddingBottom: 80 }}>
+          <Animated.View entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 20, padding: 18, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 24 }}>
+              {towelPlaced ? "Towel placed! Head is supported and cushioned." : "The head is appearing! Place a clean towel below to support it immediately."}
+            </Text>
+          </Animated.View>
+
+          {!towelPlaced && (
+            <Animated.View entering={FadeInUp.delay(200)}>
+              <TouchableOpacity onPress={handlePlaceTowel} activeOpacity={0.85}
+                style={{ backgroundColor: '#EC4899', borderRadius: 18, paddingVertical: 18, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: '#BE185D',
+                  shadowColor: '#EC4899', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12 }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 2 }}>PLACE TOWEL BELOW HEAD</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </View>
+
+        <StepNavigation currentStep={8} />
+      </SafeAreaView>
 
       {showSuccess && (
-        <SuccessOverlay 
-          message="Towel placed! Head supported safely." 
-          onComplete={() => {
-            setShowSuccess(false);
-            markStepComplete(8);
-          }} 
-        />
+        <SuccessOverlay message="Head supported safely! Now check for the umbilical cord." 
+          onComplete={() => { setShowSuccess(false); markStepComplete(8); }} />
       )}
-
-      <StepNavigation currentStep={8} />
     </View>
   );
 }

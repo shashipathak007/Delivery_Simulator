@@ -3,9 +3,11 @@ import { View, Text, TouchableOpacity, ImageBackground, StatusBar, Image, Dimens
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { 
-  FadeIn, FadeInUp, SlideInRight, ZoomIn
+  FadeIn, FadeInUp, SlideInRight, ZoomIn,
+  useSharedValue, useAnimatedStyle, withTiming, withRepeat
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import StepHeader from '../components/StepHeader';
 import SuccessOverlay from '../components/SuccessOverlay';
@@ -57,6 +59,30 @@ const SCENE_PROGRESSION = [
     actionLabel: null,
   },
 ];
+
+const PulsingIndicator = ({ icon = "gesture-double-tap" }) => {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(0.6);
+
+  React.useEffect(() => {
+    scale.value = withRepeat(withTiming(1.2, { duration: 1000 }), -1, true);
+    opacity.value = withRepeat(withTiming(0.1, { duration: 1000 }), -1, true);
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
+      <Animated.View style={[{ position: 'absolute', width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(56,189,248, 0.2)' }, animStyle]} />
+      <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(56,189,248,0.4)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#BAE6FD' }}>
+        <MaterialCommunityIcons name={icon} size={28} color="#FFF" />
+      </View>
+    </View>
+  );
+};
 
 export default function Step03() {
   const router = useRouter();
@@ -110,7 +136,7 @@ export default function Step03() {
     const targetY = height / 2;
 
     const distance = Math.sqrt(Math.pow(x - targetX, 2) + Math.pow(y - targetY, 2));
-    if (distance < 150) {
+    if (distance < 400) {
       setActiveDropZone('hands');
     } else {
       setActiveDropZone(null);
@@ -124,7 +150,7 @@ export default function Step03() {
     const targetY = height / 2;
     const distance = Math.sqrt(Math.pow(x - targetX, 2) + Math.pow(y - targetY, 2));
 
-    if (distance < 150) {
+    if (distance < 400) {
       if (scene.requiredItem === itemId) {
         // Success
         setUsedItems(prev => [...prev, itemId]);
@@ -134,7 +160,10 @@ export default function Step03() {
         setSceneIndex(nextIndex);
         
         if (nextIndex === SCENE_PROGRESSION.length - 1) {
-          setTimeout(() => setShowSuccess(true), 800);
+          // Automatically complete
+          setTimeout(() => {
+            markStepComplete(3);
+          }, 1500);
         }
         return true;
       }
@@ -164,24 +193,34 @@ export default function Step03() {
 
       {/* Full-screen background */}
       {SCENE_PROGRESSION.map((s, i) => (
-        i === sceneIndex && (
+        i <= sceneIndex && (
           <Animated.View 
             key={s.id} 
             entering={FadeIn.duration(500)} 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1, backgroundColor: '#050505', justifyContent: 'center', alignItems: 'center' }}
+            style={{ position: 'absolute', top: -80, left: 0, right: 0, bottom: 0, zIndex: 1, backgroundColor: '#050505', justifyContent: 'center', alignItems: 'center' }}
           >
-            <Image source={s.image} style={{ width: '100%', height: '60%' }} resizeMode="contain" />
+            <Image source={s.image} style={{ width: '100%', height: '115%' }} resizeMode="contain" />
           </Animated.View>
         )
       ))}
 
-      {/* Invisible Drop Zone overlay in the center of screen */}
-      <View style={{ position: 'absolute', top: '35%', left: '20%', width: '60%', height: '40%', zIndex: 10 }}>
+      {/* Invisible Drop Zone overlay - Massive per user request */}
+      <View style={{ position: 'absolute', top: '15%', left: 0, width: '100%', height: '70%', zIndex: 10 }}>
+        {!isDone && <PulsingIndicator icon="hand-wash" />}
         <DropZone id="hands" activeZoneId={activeDropZone} style={{ flex: 1 }} />
       </View>
-
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 150, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.55)' }} pointerEvents="none" />
-      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 300, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)' }} pointerEvents="none" />
+      {/* Dark overlays */}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.9)', 'transparent']}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 160, zIndex: 2 }}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
+        locations={[0, 0.4, 1]}
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 280, zIndex: 2 }}
+        pointerEvents="none"
+      />
 
       <SafeAreaView style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }} pointerEvents="box-none">
         
@@ -208,15 +247,31 @@ export default function Step03() {
           )}
         </View>
 
-        <View style={{ paddingHorizontal: 20, paddingBottom: 80 }} pointerEvents="box-none">
+        {/* Bottom area */}
+        <View style={{ paddingHorizontal: 20, paddingBottom: 110 }} pointerEvents="box-none">
+          {/* Progress Indicators */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 14, gap: 8 }}>
+            {['1', '2'].map((name, i) => (
+              <View key={i} style={{ 
+                paddingHorizontal: 16, paddingVertical: 6, borderRadius: 14,
+                backgroundColor: sceneIndex > i ? 'rgba(56,189,248,0.9)' : 'rgba(0,0,0,0.4)',
+                borderWidth: 1.5, borderColor: sceneIndex > i ? '#BAE6FD' : 'rgba(255,255,255,0.1)',
+              }}>
+                <Text style={{ fontSize: 11, fontWeight: '800', color: '#FFFFFF', letterSpacing: 1 }}>{name}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Instruction Card */}
           <Animated.View 
-            key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} 
-            style={{ backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 20, padding: 18, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}
+            key={`instr-${sceneIndex}`}
+            entering={SlideInRight.duration(400)} 
+            style={{ 
+              backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20, padding: 18,
+              marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+            }}
             pointerEvents="none"
           >
-            <Text style={{ color: '#FCD34D', fontSize: 16, fontWeight: '900', textAlign: 'center', marginBottom: 4 }}>
-              {scene.requiredItem ? "DRAG ITEM 👆" : "INSTRUCTION"}
-            </Text>
             <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 24 }}>
               {scene.instruction}
             </Text>
@@ -237,12 +292,7 @@ export default function Step03() {
         <StepNavigation currentStep={3} />
       </SafeAreaView>
 
-      {showSuccess && (
-        <SuccessOverlay 
-          message="Hands washed thoroughly and gloves on! Safe to assist delivery." 
-          onComplete={() => { setShowSuccess(false); markStepComplete(3); }} 
-        />
-      )}
+      {/* No success popups */}
     </View>
   );
 }

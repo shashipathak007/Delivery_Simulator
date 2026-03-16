@@ -1,125 +1,159 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ImageBackground, StatusBar, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn, FadeOut, ZoomIn, SlideInDown } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeIn, FadeInUp, SlideInRight, ZoomIn } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import StepHeader from '../components/StepHeader';
-import ItemTray from '../components/ItemTray';
-import DropZone from '../components/DropZone';
 import SuccessOverlay from '../components/SuccessOverlay';
 import StepNavigation from '../components/StepNavigation';
 import { useGame } from '../context/GameContext';
 
-const TRAY_ITEMS = [
-  { id: 'placenta', name: 'Placenta', icon: require('../assets/images/placenta.png'), type: 'image' },
+const SCENE_PROGRESSION = [
+  {
+    id: 'waiting',
+    image: require('../assets/images/PutOnMothersChest.png'),
+    instruction: 'Keep baby skin-to-skin while waiting for the placenta. NEVER pull the cord!',
+    actionLabel: null,
+    isWarning: true,
+  },
+  {
+    id: 'delivered',
+    image: require('../assets/images/PutOnMothersChest.png'),
+    instruction: 'The placenta has delivered naturally! We need to store it safely for doctors to inspect.',
+    actionLabel: 'PLACE IN PLASTIC BAG',
+    showPlacenta: true,
+  },
+  {
+    id: 'stored',
+    image: require('../assets/images/PutOnMothersChest.png'),
+    instruction: 'Placenta is secured in a bag. Do not throw it away! Paramedics must examine it.',
+    actionLabel: null,
+  },
 ];
 
 export default function Step14() {
   const router = useRouter();
   const { addScore, score, markStepComplete } = useGame();
   
-  const [timer, setTimer] = useState(3);
-  const [placentaReady, setPlacentaReady] = useState(false);
-  const [placentaStored, setPlacentaStored] = useState(false);
-  const [activeDropZone, setActiveDropZone] = useState(null);
+  const [sceneIndex, setSceneIndex] = useState(0);
+  const [waitTime, setWaitTime] = useState(15);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
+
+  const scene = SCENE_PROGRESSION[sceneIndex];
+  const isDone = sceneIndex === SCENE_PROGRESSION.length - 1;
 
   useEffect(() => {
     let interval;
-    if (timer > 0) {
-      interval = setInterval(() => setTimer(t => t - 1), 1000);
-    } else if (timer === 0 && !placentaReady) {
-      setPlacentaReady(true);
+    if (sceneIndex === 0 && waitTime > 0) {
+      interval = setInterval(() => {
+        setWaitTime((prev) => prev - 1);
+      }, 300); // Fast forward timer for simulation purposes
+    } else if (sceneIndex === 0 && waitTime === 0) {
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch(e) {}
+      setSceneIndex(1);
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [timer, placentaReady]);
+    return () => clearInterval(interval);
+  }, [sceneIndex, waitTime]);
 
-  const handleProximity = (itemId, posX, posY) => {
-    const isOverContainer = posX > 150 && posY > 200 && posY < 600;
-    setActiveDropZone(prev => isOverContainer ? 'container' : null);
-  };
+  const handleAction = useCallback(() => {
+    if (transitioning || isDone) return;
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch(e) {}
+    setTransitioning(true);
+    addScore(100);
 
-  const handleDrop = (itemId, posX, posY) => {
-    const isOverContainer = posX > 150 && posY > 200 && posY < 600;
+    setTimeout(() => {
+      setSceneIndex(2);
+      setTransitioning(false);
+      setTimeout(() => setShowSuccess(true), 800);
+    }, 400);
 
-    if (isOverContainer && itemId === 'placenta' && placentaReady) {
-      setPlacentaStored(true);
-      addScore(100);
-      setActiveDropZone(null);
-      setTimeout(() => setShowSuccess(true), 1200);
-      return true;
-    }
-    return false;
-  };
+  }, [sceneIndex, transitioning, isDone]);
+
+  // Dynamic colors
+  const getButtonColor = () => transitioning ? '#6B7280' : '#2563EB';
+  const getButtonBorder = () => transitioning ? '#4B5563' : '#1D4ED8';
 
   return (
-    <View className="flex-1 bg-blue-50">
-      <StepHeader 
-        step={14} 
-        score={score}
-        instruction={timer > 0 ? "DO NOT PULL CORD. Wait for natural delivery..." : "Store placenta safely in the container."} 
-      />
+    <View style={{ flex: 1, backgroundColor: '#111' }}>
+      <StatusBar barStyle="light-content" />
 
-      <View className="flex-1 items-center justify-center p-8 mb-60 relative flex-row space-x-12">
-        <Animated.View className="items-center z-10 w-48 h-64 justify-center">
-            <Image 
-                source={require('../assets/images/mother.png')}
-                style={{ width: 300, height: 300, opacity: 0.8 }}
-                resizeMode="contain"
-            />
-            {placentaReady && !placentaStored && (
-              <Animated.View entering={SlideInDown.duration(1500)} exiting={FadeOut} className="absolute bottom-[-10] z-20">
-                <Image source={require('../assets/images/placenta.png')} style={{ width: 80, height: 80 }} resizeMode="contain" />
-              </Animated.View>
-            )}
-            
-            {!placentaReady && timer > 0 && (
-                <Animated.View entering={FadeIn} className="absolute -top-20 bg-red-100 p-4 rounded-[20px] shadow-lg border-2 border-red-200">
-                    <Text className="text-red-700 font-black text-center text-xs tracking-widest mb-1">WARNING</Text>
-                    <Text className="text-red-600 font-bold text-center">NEVER PULL THE CORD! ❌</Text>
-                    <Text className="text-red-800/60 font-black text-[30px] text-center mt-2">{timer}s</Text>
-                </Animated.View>
-            )}
-        </Animated.View>
+      {SCENE_PROGRESSION.map((s, i) => (
+        i === sceneIndex && (
+          <Animated.View key={s.id} entering={FadeIn.duration(500)} 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
+            <ImageBackground source={s.image} style={{ flex: 1 }} resizeMode="cover" />
+          </Animated.View>
+        )
+      ))}
 
-        {placentaReady && (
-          <DropZone id="container" activeZoneId={activeDropZone} style={{ width: 160, height: 200, justifyContent: 'center', alignItems: 'center' }}>
-            <View className="items-center justify-center">
-                <View className="bg-gray-200 w-32 h-40 rounded-t-xl rounded-b-[40px] border-4 border-gray-300 items-center justify-center shadow-md">
-                    <View className="w-full h-8 bg-gray-400 absolute top-0 rounded-t-lg" />
-                    {placentaStored && (
-                        <Animated.View entering={ZoomIn} className="items-center">
-                            <Image source={require('../assets/images/placenta.png')} style={{ width: 50, height: 50 }} resizeMode="contain" />
-                            <Text className="text-[10px] font-black text-gray-500 mt-2">SECURED</Text>
-                        </Animated.View>
-                    )}
-                </View>
-                {!placentaStored && <Text className="mt-4 font-black text-gray-400 text-xs tracking-[2px]">PLACENTA BIN</Text>}
-            </View>
-          </DropZone>
-        )}
-      </View>
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 150, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.5)' }} />
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 350, zIndex: 2, backgroundColor: scene.isWarning ? 'rgba(127,29,29,0.85)' : 'rgba(0,0,0,0.75)' }} />
 
-      <ItemTray 
-        items={placentaReady ? TRAY_ITEMS : []} 
-        usedItems={placentaStored ? ['placenta'] : []}
-        onDrop={handleDrop}
-        onProximity={handleProximity} 
-      />
+      <SafeAreaView style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }}>
+        <StepHeader step={14} score={score} instruction="" />
+
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          {scene.isWarning && waitTime > 0 && (
+            <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(239,68,68,0.95)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 3, borderColor: '#FCA5A5', alignItems: 'center' }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18, letterSpacing: 2 }}>DO NOT PULL CORD</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 32, letterSpacing: 2, marginTop: 10 }}>{waitTime} m</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 4 }}>Waiting for placenta to detach naturally...</Text>
+            </Animated.View>
+          )}
+
+          {scene.showPlacenta && (
+            <Animated.View entering={ZoomIn.springify()} style={{ 
+              backgroundColor: 'rgba(255,255,255,0.95)', padding: 15, borderRadius: 30, 
+              borderWidth: 4, borderColor: '#E5E7EB', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 15
+            }}>
+              <Image source={require('../assets/images/placenta.png')} style={{ width: 100, height: 100 }} resizeMode="contain" />
+            </Animated.View>
+          )}
+
+          {isDone && (
+            <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(16,185,129,0.9)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 20, borderWidth: 2, borderColor: '#A7F3D0' }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18, letterSpacing: 2 }}>PLACENTA SECURED</Text>
+            </Animated.View>
+          )}
+        </View>
+
+        <View style={{ paddingHorizontal: 20, paddingBottom: 80 }}>
+          <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} 
+            style={{ 
+              backgroundColor: scene.isWarning ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.12)', 
+              borderRadius: 20, padding: 18, marginBottom: 16, 
+              borderWidth: scene.isWarning ? 2 : 1, 
+              borderColor: scene.isWarning ? '#FCA5A5' : 'rgba(255,255,255,0.2)' 
+            }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 24 }}>{scene.instruction}</Text>
+          </Animated.View>
+
+          {scene.actionLabel && (
+            <Animated.View entering={FadeInUp.delay(200).duration(400)}>
+              <TouchableOpacity onPress={handleAction} disabled={transitioning} activeOpacity={0.85}
+                style={{ 
+                  backgroundColor: getButtonColor(), borderRadius: 16, paddingVertical: 20, alignItems: 'center',
+                  borderBottomWidth: 4, borderBottomColor: getButtonBorder(),
+                  shadowColor: getButtonColor(), shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.5, shadowRadius: 12,
+                }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 1.5 }}>
+                  {scene.actionLabel}
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </View>
+
+        <StepNavigation currentStep={14} />
+      </SafeAreaView>
 
       {showSuccess && (
-        <SuccessOverlay 
-          message="Placenta delivered naturally and secured for the hospital." 
-          onComplete={() => {
-            setShowSuccess(false);
-            markStepComplete(14);
-          }} 
-        />
+        <SuccessOverlay message="Placenta secured for medical review. Well done!" 
+          onComplete={() => { setShowSuccess(false); markStepComplete(14); }} />
       )}
-
-      <StepNavigation currentStep={14} />
     </View>
   );
 }

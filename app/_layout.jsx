@@ -11,7 +11,7 @@ export default function Layout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <GameProvider>
           <InventoryProvider>
-            <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+            <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="step01" />
               <Stack.Screen name="step02" />
@@ -30,7 +30,6 @@ export default function Layout() {
               <Stack.Screen name="step15" />
               <Stack.Screen name="step16" />
               <Stack.Screen name="step17" />
-              <Stack.Screen name="step18" />
               <Stack.Screen name="complete" />
             </Stack>
           </InventoryProvider>

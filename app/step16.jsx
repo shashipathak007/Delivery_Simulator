@@ -1,137 +1,225 @@
-import React, { useState } from 'react';
-import { View, Text, Image, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ImageBackground, StatusBar, Image, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeIn, FadeInUp, SlideInRight, ZoomIn } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import StepHeader from '../components/StepHeader';
-import ItemTray from '../components/ItemTray';
-import DropZone from '../components/DropZone';
 import SuccessOverlay from '../components/SuccessOverlay';
 import StepNavigation from '../components/StepNavigation';
+import ItemTray from '../components/ItemTray';
+import DropZone from '../components/DropZone';
 import { useGame } from '../context/GameContext';
 
+const { width, height } = Dimensions.get('window');
+
 const TRAY_ITEMS = [
-  { id: 'babyblanket', name: 'Baby Blanket', icon: require('../assets/images/blanket.png'), type: 'image' },
-  { id: 'momcover', name: 'Mother Cover', icon: require('../assets/images/clean_sheet.png'), type: 'image' },
+  { id: 'blanket', name: 'Blanket', type: 'image', icon: require('../assets/images/blanket.png') },
+  { id: 'sheet', name: 'Clean Sheet', type: 'image', icon: require('../assets/images/clean_sheet.png') }
+];
+
+const SCENE_PROGRESSION = [
+  {
+    id: 'exposed',
+    image: require('../assets/images/PutOnMothersChest.png'),
+    instruction: 'Both are exposed to the cold air. Drag BLANKET to baby.',
+    requiredItem: 'blanket',
+    actionLabel: null,
+  },
+  {
+    id: 'baby_covered',
+    image: require('../assets/images/PutOnMothersChest.png'),
+    instruction: 'Baby is warm. Now drag SHEET to the mother.',
+    requiredItem: 'sheet',
+    actionLabel: null,
+  },
+  {
+    id: 'all_covered',
+    image: require('../assets/images/PutOnMothersChest.png'),
+    instruction: 'Both are warm, safe, and resting together.',
+    requiredItem: null,
+    actionLabel: null,
+  },
 ];
 
 export default function Step16() {
   const router = useRouter();
   const { addScore, score, markStepComplete } = useGame();
   
-  const [babyCovered, setBabyCovered] = useState(false);
-  const [momCovered, setMomCovered] = useState(false);
-  const [activeDropZone, setActiveDropZone] = useState(null);
+  const [sceneIndex, setSceneIndex] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
+  
+  const [usedItems, setUsedItems] = useState([]);
+  const [activeDropZone, setActiveDropZone] = useState(null);
 
-  const handleProximity = (itemId, posX, posY) => {
-    if (itemId === 'babyblanket' && posX < 180 && posY > 200 && posY < 600) {
+  const scene = SCENE_PROGRESSION[sceneIndex];
+  const isDone = sceneIndex === SCENE_PROGRESSION.length - 1;
+
+  // Handle Drag & Drop
+  const handleProximity = (itemId, x, y) => {
+    if (transitioning || isDone) return;
+    
+    // Evaluate proximity based on current required item
+    // Baby is roughly bottom right of center
+    const isBabyZone = sceneIndex === 0 && x > width / 2 && y > height / 2;
+    // Mother is generally the rest of the chest area
+    const isMotherZone = sceneIndex === 1 && y > height / 3 && y < height * 0.8 && x < width / 2;
+
+    if (itemId === 'blanket' && isBabyZone) {
       setActiveDropZone('baby');
-    } else if (itemId === 'momcover' && posX > 200 && posY > 200 && posY < 600) {
-      setActiveDropZone('mom');
+    } else if (itemId === 'sheet' && isMotherZone) {
+      setActiveDropZone('mother');
     } else {
       setActiveDropZone(null);
     }
   };
 
-  const handleDrop = (itemId, posX, posY) => {
-    const isLeft = posX < 180 && posY > 200 && posY < 600;
-    const isRight = posX > 200 && posY > 200 && posY < 600;
+  const handleDrop = (itemId, x, y) => {
+    setActiveDropZone(null);
+    if (transitioning || isDone) return false;
 
-    // Enforce Baby First
-    if (isLeft && itemId === 'babyblanket' && !babyCovered) {
-      setBabyCovered(true);
-      addScore(50);
-      setActiveDropZone(null);
-      return true;
-    }
-    if (isRight && itemId === 'momcover' && !momCovered) {
-      if (!babyCovered) {
-          Alert.alert('⚠️ Baby First!', 'Cover the baby immediately!\nNewborns lose body heat very fast and hypothermia can be fatal within minutes.', [{ text: 'OK' }]);
-          return false;
+    const isBabyZone = sceneIndex === 0 && x > width / 2 && y > height / 2;
+    const isMotherZone = sceneIndex === 1 && y > height / 3 && y < height * 0.8 && x < width / 2;
+
+    if (scene.requiredItem === itemId) {
+      if ((itemId === 'blanket' && isBabyZone) || (itemId === 'sheet' && isMotherZone)) {
+        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch(e) {}
+        setTransitioning(true);
+        setUsedItems(prev => [...prev, itemId]);
+        addScore(50);
+
+        setTimeout(() => {
+          const nextIndex = sceneIndex + 1;
+          setSceneIndex(nextIndex);
+          setTransitioning(false);
+          
+          if (nextIndex === SCENE_PROGRESSION.length - 1) {
+            setTimeout(() => setShowSuccess(true), 800);
+          }
+        }, 400);
+
+        return true;
       }
-      setMomCovered(true);
-      addScore(50);
-      setActiveDropZone(null);
-      setTimeout(() => setShowSuccess(true), 1200);
-      return true;
     }
     return false;
   };
 
-  const usedItems = [babyCovered && 'babyblanket', momCovered && 'momcover'].filter(Boolean);
-  const lockedItems = !babyCovered ? ['momcover'] : [];
+  const lockedItems = TRAY_ITEMS.map(i => i.id).filter(id => {
+    return scene.requiredItem !== id;
+  });
 
   return (
-    <View className={`flex-1 ${babyCovered && momCovered ? 'bg-orange-50' : 'bg-blue-50'}`}>
-      <StepHeader 
-        step={16} 
-        score={score}
-        instruction={!babyCovered ? "Step 1: Cover the baby first for warmth" : !momCovered ? "Step 2: Now cover the mother" : "Both are cozy and safe!"} 
-      />
+    <View style={{ flex: 1, backgroundColor: '#111' }}>
+      <StatusBar barStyle="light-content" />
 
-      <View className="flex-1 items-center justify-center mb-60 flex-row relative px-4">
-        
-        {/* Baby Coverage Target */}
-        <DropZone id="baby" activeZoneId={activeDropZone} style={{ width: 140, height: 260 }}>
-           <View className="items-center justify-center">
-              <Image source={require('../assets/images/baby.png')} style={{ width: 80, height: 80 }} resizeMode="contain" />
-              {babyCovered && (
-                <Animated.View entering={ZoomIn} style={{ position: 'absolute', bottom: -10, zIndex: 2 }}>
-                    <Image 
-                        source={require('../assets/images/blanket.png')}
-                        style={{ width: 120, height: 100, opacity: 0.9 }}
-                        resizeMode="contain"
-                    />
-                </Animated.View>
-              )}
-           </View>
-        </DropZone>
-
-        {/* Mother Coverage Target */}
-        <DropZone id="mom" activeZoneId={activeDropZone} style={{ width: 220, height: 320 }}>
-            <View className="items-center justify-center">
-               <Image 
-                   source={require('../assets/images/mother.png')}
-                   style={{ width: 220, height: 220, opacity: 0.8 }}
-                   resizeMode="contain"
-               />
-               {momCovered && (
-                <Animated.View entering={ZoomIn} style={{ position: 'absolute', bottom: 0, zIndex: 2 }}>
-                    <Image 
-                        source={require('../assets/images/clean_sheet.png')}
-                        style={{ width: 200, height: 180, opacity: 0.85 }}
-                        resizeMode="contain"
-                    />
-                </Animated.View>
-               )}
-            </View>
-        </DropZone>
-
-        {babyCovered && momCovered && (
-            <Animated.View entering={FadeIn.duration(1500)} className="absolute inset-0 z-0 bg-yellow-400 opacity-10 pointer-events-none" />
-        )}
-      </View>
-
-      <ItemTray 
-        items={TRAY_ITEMS} 
-        usedItems={usedItems}
-        lockedItems={lockedItems}
-        onDrop={handleDrop}
-        onProximity={handleProximity} 
-      />
-
-      {showSuccess && (
-        <SuccessOverlay 
-          message="Warmth maintained! Crucial for recovery." 
-          onComplete={() => {
-            setShowSuccess(false);
-            markStepComplete(16);
-          }} 
+      {/* Top Inventory Tray */}
+      {!isDone && (
+        <ItemTray 
+          items={TRAY_ITEMS}
+          usedItems={usedItems}
+          lockedItems={lockedItems}
+          onDrop={handleDrop}
+          onProximity={handleProximity}
+          position="top"
         />
       )}
 
-      <StepNavigation currentStep={16} />
+      {SCENE_PROGRESSION.map((s, i) => (
+        i === sceneIndex && (
+          <Animated.View key={s.id} entering={FadeIn.duration(500)} 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1, backgroundColor: '#050505', justifyContent: 'center', alignItems: 'center' }}>
+            <ImageBackground source={s.image} style={{ flex: 1, width: '100%' }} resizeMode="cover" />
+          </Animated.View>
+        )
+      ))}
+
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 150, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.5)' }} pointerEvents="none" />
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 320, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.75)' }} pointerEvents="none" />
+
+      {/* Invisible Drop Zones */}
+      {sceneIndex === 0 && (
+        <View style={{ position: 'absolute', bottom: '20%', right: '10%', width: 140, height: 140, zIndex: 10 }}>
+          <DropZone id="baby" activeZoneId={activeDropZone} style={{ flex: 1 }} />
+        </View>
+      )}
+      {sceneIndex === 1 && (
+        <View style={{ position: 'absolute', top: '40%', left: '10%', width: 200, height: 200, zIndex: 10 }}>
+          <DropZone id="mother" activeZoneId={activeDropZone} style={{ flex: 1 }} />
+        </View>
+      )}
+
+      {/* Persistent Blankets/Sheets overlay if placed */}
+      {sceneIndex >= 1 && (
+        <Animated.View entering={FadeIn.duration(800)} style={{ position: 'absolute', bottom: '25%', right: '15%', zIndex: 1, opacity: 0.9 }} pointerEvents="none">
+          <Image source={require('../assets/images/blanket.png')} style={{ width: 120, height: 120 }} resizeMode="contain" />
+        </Animated.View>
+      )}
+      {sceneIndex >= 2 && (
+        <Animated.View entering={FadeIn.duration(800)} style={{ position: 'absolute', top: '35%', left: '5%', zIndex: 1, opacity: 0.8 }} pointerEvents="none">
+          <Image source={require('../assets/images/clean_sheet.png')} style={{ width: 220, height: 220, transform: [{ rotate: '-10deg' }] }} resizeMode="contain" />
+        </Animated.View>
+      )}
+
+      <SafeAreaView style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }} pointerEvents="box-none">
+        
+        {/* Header pushed down slightly if tray is active */}
+        <View pointerEvents="none" style={{ marginTop: !isDone ? 110 : 0 }}>
+          <StepHeader step={16} score={score} instruction="" />
+        </View>
+
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
+          {isDone && (
+            <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(16,185,129,0.9)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 20, borderWidth: 2, borderColor: '#A7F3D0' }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18, letterSpacing: 2 }}>WARM AND SAFE</Text>
+            </Animated.View>
+          )}
+        </View>
+
+        <View style={{ paddingHorizontal: 20, paddingBottom: 80 }} pointerEvents="box-none">
+          
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 14, gap: 6 }}>
+            {['Cover Baby', 'Cover Mother'].map((name, i) => {
+              const done = sceneIndex > i;
+              return (
+                <View key={i} style={{ 
+                  paddingHorizontal: 14, paddingVertical: 6, borderRadius: 14,
+                  backgroundColor: done ? 'rgba(16,185,129,0.9)' : 'rgba(255,255,255,0.15)',
+                  borderWidth: 1.5, borderColor: done ? '#A7F3D0' : 'rgba(255,255,255,0.2)',
+                }}>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#FFFFFF', letterSpacing: 1 }}>{name}</Text>
+                </View>
+              );
+            })}
+          </View>
+
+          <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} 
+            style={{ 
+              backgroundColor: 'rgba(255,255,255,0.12)', 
+              borderRadius: 20, padding: 18, marginBottom: 16, 
+              borderWidth: 1, 
+              borderColor: 'rgba(255,255,255,0.2)' 
+            }}
+            pointerEvents="none"
+          >
+            {scene.requiredItem && (
+              <Text style={{ color: '#FCD34D', fontSize: 16, fontWeight: '900', textAlign: 'center', marginBottom: 4 }}>
+                DRAG ITEM 👆
+              </Text>
+            )}
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 24 }}>{scene.instruction}</Text>
+          </Animated.View>
+
+        </View>
+
+        <StepNavigation currentStep={16} />
+      </SafeAreaView>
+
+      {showSuccess && (
+        <SuccessOverlay message="Both are warm and safe. Good job preserving body heat!" 
+          onComplete={() => { setShowSuccess(false); markStepComplete(16); }} />
+      )}
     </View>
   );
 }

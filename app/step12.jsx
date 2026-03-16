@@ -1,160 +1,178 @@
-import React, { useState } from 'react';
-import { View, Image, Text } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ImageBackground, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, runOnJS, ZoomIn } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeIn, FadeInUp, SlideInRight, ZoomIn } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import StepHeader from '../components/StepHeader';
-import ItemTray from '../components/ItemTray';
-import DropZone from '../components/DropZone';
 import SuccessOverlay from '../components/SuccessOverlay';
 import StepNavigation from '../components/StepNavigation';
 import { useGame } from '../context/GameContext';
-import * as Haptics from 'expo-haptics';
 
-const TRAY_ITEMS = [
-  { id: 'rub', name: 'Rub Back', icon: require('../assets/images/towel.png'), type: 'image' },
-  { id: 'tap', name: 'Tap Foot', icon: require('../assets/images/wash_hands.png'), type: 'image' },
+const SCENE_PROGRESSION = [
+  {
+    id: 'initial',
+    image: require('../assets/images/PutOnMothersChest.png'),
+    instruction: 'If the baby is not crying loudly, stimulate breathing by rubbing its back.',
+    actionLabel: 'RUB BABY\'S BACK',
+    actionType: 'rub',
+  },
+  {
+    id: 'rubbing',
+    image: require('../assets/images/RubBackAndTapFeet.png'),
+    instruction: 'Rubbing back gently... (keep tapping to stimulate)',
+    actionLabel: 'RUB BACK',
+    actionType: 'rub',
+    isInteractive: true,
+  },
+  {
+    id: 'tapping',
+    image: require('../assets/images/RubBackAndTapFeet.png'),
+    instruction: 'Now tap the soles of the baby\'s feet gently.',
+    actionLabel: 'TAP FEET',
+    actionType: 'tap',
+    isInteractive: true,
+  },
+  {
+    id: 'crying',
+    image: require('../assets/images/BabyCries.png'),
+    instruction: 'Excellent! The baby is crying loudly and breathing well.',
+    actionLabel: null,
+  },
 ];
 
 export default function Step12() {
   const router = useRouter();
   const { addScore, score, markStepComplete } = useGame();
   
+  const [sceneIndex, setSceneIndex] = useState(0);
   const [rubCount, setRubCount] = useState(0);
   const [tapCount, setTapCount] = useState(0);
-  const [isHealthy, setIsHealthy] = useState(false);
-  const [activeDropZone, setActiveDropZone] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
 
-  const babyScale = useSharedValue(1);
+  const scene = SCENE_PROGRESSION[sceneIndex];
+  const isDone = sceneIndex === 3;
 
-  const handleProximity = (itemId, posX, posY) => {
-    if (itemId === 'rub' && posY > 200 && posY < 450) {
-      setActiveDropZone('back');
-    } else if (itemId === 'tap' && posY >= 450 && posY < 650) {
-      setActiveDropZone('feet');
-    } else {
-      setActiveDropZone(null);
+  const handleAction = useCallback(() => {
+    if (transitioning || isDone) return;
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch(e) {}
+    
+    // First click transitions to the interactive rubbing scene
+    if (sceneIndex === 0) {
+      setTransitioning(true);
+      setTimeout(() => {
+        setSceneIndex(1);
+        setTransitioning(false);
+      }, 300);
+      return;
     }
-  };
 
-  const checkCompletion = (r, t) => {
-    if (r >= 3 && t >= 2 && !isHealthy) {
-      setIsHealthy(true);
-      animateCry();
-    }
-  };
-
-  const handleDrop = (itemId, posX, posY) => {
-    const isOverBack = posY > 200 && posY < 450;
-    const isOverFeet = posY >= 450 && posY < 650;
-
-    if (isOverBack && itemId === 'rub' && rubCount < 3) {
+    // Interactive rub
+    if (sceneIndex === 1) {
       const newRub = rubCount + 1;
       setRubCount(newRub);
-      addScore(20);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      checkCompletion(newRub, tapCount);
-      setActiveDropZone(null);
-      return false;
+      addScore(10);
+      
+      if (newRub >= 5) { // Required rubs
+        setTransitioning(true);
+        setTimeout(() => {
+          setSceneIndex(2);
+          setTransitioning(false);
+        }, 300);
+      }
+      return;
     }
-    if (isOverFeet && itemId === 'tap' && tapCount < 2) {
+
+    // Interactive tap
+    if (sceneIndex === 2) {
       const newTap = tapCount + 1;
       setTapCount(newTap);
-      addScore(20);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      checkCompletion(rubCount, newTap);
-      setActiveDropZone(null);
-      return false; 
-    }
-    return false;
-  };
-
-  const animateCry = () => {
-    babyScale.value = withRepeat(
-      withSequence(
-        withTiming(1.15, { duration: 250 }),
-        withTiming(1, { duration: 250 })
-      ),
-      6,
-      true,
-      () => {
-        runOnJS(setShowSuccess)(true);
+      addScore(10);
+      
+      if (newTap >= 5) { // Required taps
+        setTransitioning(true);
+        setTimeout(() => {
+          setSceneIndex(3);
+          setTransitioning(false);
+          setTimeout(() => setShowSuccess(true), 800);
+        }, 300);
       }
-    );
-  };
+      return;
+    }
 
-  const animatedBabyStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: babyScale.value }]
-  }));
+  }, [sceneIndex, transitioning, isDone, rubCount, tapCount]);
 
   return (
-    <View className="flex-1 bg-blue-50">
-      <StepHeader 
-        step={12} 
-        score={score}
-        instruction={rubCount < 3 ? "Stimulate breathing: Rub the baby's back (3 times)" : tapCount < 2 ? "Good! Now tap the baby's feet (2 times)" : "Baby is regularizing breathing!"} 
-      />
+    <View style={{ flex: 1, backgroundColor: '#111' }}>
+      <StatusBar barStyle="light-content" />
 
-      <View className="flex-1 items-center justify-center mb-60 relative">
-        <DropZone id="back" activeZoneId={activeDropZone} style={{ width: 220, height: 180, position: 'absolute', top: 150 }} />
-        <DropZone id="feet" activeZoneId={activeDropZone} style={{ width: 220, height: 180, position: 'absolute', bottom: 150 }} />
+      {SCENE_PROGRESSION.map((s, i) => (
+        i === sceneIndex && (
+          <Animated.View key={s.id} entering={FadeIn.duration(400)} 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
+            <ImageBackground source={s.image} style={{ flex: 1 }} resizeMode="cover" />
+          </Animated.View>
+        )
+      ))}
 
-        <View className="items-center justify-center">
-            <Image 
-                source={require('../assets/images/mother.png')}
-                style={{ width: 320, height: 320 }}
-                resizeMode="contain"
-            />
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 150, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.5)' }} />
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 280, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.65)' }} />
 
-            <Animated.View style={[animatedBabyStyle]} className="absolute top-[80px] items-center z-10">
-                <View className={`w-36 h-48 rounded-[24px] items-center justify-center ${isHealthy ? 'bg-pink-100 border-pink-400' : 'bg-[#D1E9FF] border-blue-400'} border-4 shadow-2xl`}>
-                   {isHealthy ? (
-                       <Animated.View entering={ZoomIn} className="items-center">
-                          <Image source={require('../assets/images/baby.png')} style={{ width: 100, height: 100 }} resizeMode="contain" />
-                          <View className="mt-2 bg-pink-500 px-4 py-1 rounded-full"><Text className="text-white font-black text-[10px] tracking-widest">CRYING HEALTHY</Text></View>
-                       </Animated.View>
-                   ) : (
-                       <View className="items-center">
-                          <Image source={require('../assets/images/baby.png')} style={{ width: 100, height: 100, opacity: 0.5 }} resizeMode="contain" />
-                          <Text className="text-[10px] font-bold text-blue-500 mt-2">NEED STIMULATION</Text>
-                       </View>
-                   )}
-                </View>
+      <SafeAreaView style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }}>
+        <StepHeader step={12} score={score} instruction="" />
+
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          {sceneIndex === 1 && (
+             <Animated.View entering={ZoomIn} style={{ backgroundColor: 'rgba(37,99,235,0.9)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 2, borderColor: '#93C5FD' }}>
+               <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 24, letterSpacing: 2 }}>{rubCount} / 5</Text>
+               <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 4 }}>Rubs</Text>
+             </Animated.View>
+          )}
+          {sceneIndex === 2 && (
+             <Animated.View entering={ZoomIn} style={{ backgroundColor: 'rgba(236,72,153,0.9)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 2, borderColor: '#F9A8D4' }}>
+               <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 24, letterSpacing: 2 }}>{tapCount} / 5</Text>
+               <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 4 }}>Taps</Text>
+             </Animated.View>
+          )}
+          {isDone && (
+            <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(16,185,129,0.9)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 20, borderWidth: 2, borderColor: '#A7F3D0' }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18, letterSpacing: 2 }}>BREATHING STIMULATED</Text>
             </Animated.View>
+          )}
         </View>
 
-        {/* Counter UI */}
-        <View className="absolute right-6 top-1/2 -translate-y-20 space-y-4">
-             <View className={`p-4 rounded-3xl border-2 ${rubCount >= 3 ? 'bg-green-100 border-green-300' : 'bg-white border-blue-200'} shadow-sm items-center`}>
-                 <Text className="text-xs font-black text-blue-800">BACK RUBS</Text>
-                 <Text className="text-2xl font-black text-blue-900">{rubCount}/3</Text>
-             </View>
-             <View className={`p-4 rounded-3xl border-2 ${tapCount >= 2 ? 'bg-green-100 border-green-300' : 'bg-white border-blue-200'} shadow-sm items-center`}>
-                 <Text className="text-xs font-black text-blue-800">FOOT TAPS</Text>
-                 <Text className="text-2xl font-black text-blue-900">{tapCount}/2</Text>
-             </View>
-        </View>
-      </View>
+        <View style={{ paddingHorizontal: 20, paddingBottom: 80 }}>
+          <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} 
+            style={{ backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 20, padding: 18, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 24 }}>{scene.instruction}</Text>
+          </Animated.View>
 
-      <ItemTray 
-        items={TRAY_ITEMS} 
-        usedItems={[]}
-        onDrop={handleDrop}
-        onProximity={handleProximity} 
-      />
+          {scene.actionLabel && (
+            <Animated.View entering={FadeInUp.delay(100).duration(300)}>
+              <TouchableOpacity onPress={handleAction} disabled={transitioning} activeOpacity={0.7}
+                style={{ 
+                  backgroundColor: transitioning ? '#6B7280' : (sceneIndex === 2 ? '#EC4899' : '#2563EB'), 
+                  borderRadius: 18, paddingVertical: 20, alignItems: 'center', 
+                  borderBottomWidth: 4, borderBottomColor: transitioning ? '#4B5563' : (sceneIndex === 2 ? '#BE185D' : '#1D4ED8'), 
+                  shadowColor: sceneIndex === 2 ? '#EC4899' : '#2563EB', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12 
+                }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', letterSpacing: 2 }}>
+                  {scene.actionLabel}
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </View>
+
+        <StepNavigation currentStep={12} />
+      </SafeAreaView>
 
       {showSuccess && (
-        <SuccessOverlay 
-          message="Excellent! The baby is breathing and crying healthily." 
-          onComplete={() => {
-            setShowSuccess(false);
-            markStepComplete(12);
-          }} 
-        />
+        <SuccessOverlay message="Excellent! The baby responds well to stimulation. Time to tie the cord." 
+          onComplete={() => { setShowSuccess(false); markStepComplete(12); }} />
       )}
-
-      <StepNavigation currentStep={12} />
     </View>
   );
 }

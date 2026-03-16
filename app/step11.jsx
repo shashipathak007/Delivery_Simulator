@@ -1,146 +1,147 @@
-import React, { useState } from 'react';
-import { View, Image, Text } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ImageBackground, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn, ZoomIn, useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeIn, FadeInUp, SlideInRight, ZoomIn } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import StepHeader from '../components/StepHeader';
-import ItemTray from '../components/ItemTray';
-import DropZone from '../components/DropZone';
 import SuccessOverlay from '../components/SuccessOverlay';
 import StepNavigation from '../components/StepNavigation';
 import { useGame } from '../context/GameContext';
 
-const TRAY_ITEMS = [
-  { id: 'baby', name: 'Baby', icon: require('../assets/images/baby.png'), type: 'image' },
-  { id: 'towel', name: 'Towel', icon: require('../assets/images/towel.png'), type: 'image' },
+const SCENE_PROGRESSION = [
+  {
+    id: 'baby_out',
+    image: require('../assets/images/BabyIsDelivered.png'),
+    instruction: 'Place the baby on the mother\'s chest immediately for skin-to-skin contact.',
+    actionLabel: 'PLACE BABY ON CHEST',
+  },
+  {
+    id: 'on_chest',
+    image: require('../assets/images/PutOnMothersChest.png'),
+    instruction: 'Skin-to-skin contact! Now dry the baby gently with a clean towel.',
+    actionLabel: 'DRY WITH TOWEL',
+    isDryStep: true,
+  },
+  {
+    id: 'drying',
+    image: require('../assets/images/CollectTowels.png'),
+    instruction: 'Drying baby carefully... gentle strokes.',
+    actionLabel: null,
+    autoProgress: true,
+  },
+  {
+    id: 'crying',
+    image: require('../assets/images/BabyCries.png'),
+    instruction: 'Baby is crying — this is a healthy sign! Baby is warm and dry.',
+    actionLabel: null,
+  },
 ];
 
 export default function Step11() {
   const router = useRouter();
   const { addScore, score, markStepComplete } = useGame();
-  
-  const [babyPos, setBabyPos] = useState(false);
-  const [towelPos, setTowelPos] = useState(false);
-  const [isDrying, setIsDrying] = useState(false);
-  const [activeDropZone, setActiveDropZone] = useState(null);
+  const [sceneIndex, setSceneIndex] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
+  const [dryProgress, setDryProgress] = useState(0);
 
-  const dryProgress = useSharedValue(0);
-
-  const handleProximity = (itemId, posX, posY) => {
-    const isOverChest = posY > 150 && posY < 550;
-    setActiveDropZone(prev => isOverChest ? 'chest' : null);
-  };
+  const scene = SCENE_PROGRESSION[sceneIndex];
+  const isDone = sceneIndex === SCENE_PROGRESSION.length - 1;
 
   const startDrying = () => {
-    setIsDrying(true);
-    dryProgress.value = withTiming(1, { duration: 2500 }, () => {
-      runOnJS(setTowelPos)(true);
-      runOnJS(setIsDrying)(false);
-    });
-  };
-
-  const handleDrop = (itemId, posX, posY) => {
-    const isOverChest = posY > 150 && posY < 550;
-
-    if (isOverChest) {
-      if (itemId === 'baby' && !babyPos) {
-        setBabyPos(true);
+    let count = 0;
+    const interval = setInterval(() => {
+      count++;
+      setDryProgress(count * 10);
+      if (count >= 10) {
+        clearInterval(interval);
         addScore(50);
-        setActiveDropZone(null);
-        return true;
+        setSceneIndex(3);
+        setTransitioning(false);
+        setTimeout(() => setShowSuccess(true), 800);
       }
-      if (itemId === 'towel' && babyPos && !towelPos && !isDrying) {
-        startDrying();
-        setActiveDropZone(null);
-        return true;
-      }
-    }
-    return false;
+    }, 250);
   };
 
-  React.useEffect(() => {
-    if (towelPos && babyPos) {
-       setTimeout(() => setShowSuccess(true), 1200);
+  const handleAction = useCallback(() => {
+    if (transitioning || isDone) return;
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch(e) {}
+    setTransitioning(true);
+    addScore(50);
+
+    if (scene.isDryStep) {
+      setSceneIndex(2);
+      startDrying();
+      return;
     }
-  }, [towelPos]);
 
-  const towelStyle = useAnimatedStyle(() => ({
-    opacity: dryProgress.value > 0 ? 0.8 : 0,
-    transform: [
-        { translateX: Math.sin(dryProgress.value * 30) * 10 },
-        { scale: 1 }
-    ]
-  }));
-
-  const usedItems = [babyPos && 'baby', (towelPos || isDrying) && 'towel'].filter(Boolean);
-  const lockedItems = !babyPos ? ['towel'] : [];
+    setTimeout(() => {
+      setSceneIndex(sceneIndex + 1);
+      setTransitioning(false);
+    }, 300);
+  }, [sceneIndex, transitioning, isDone, scene]);
 
   return (
-    <View className="flex-1 bg-blue-50">
-      <StepHeader 
-        step={11} 
-        score={score}
-        instruction={!babyPos ? "Immediately place baby on mother's chest" : !towelPos ? (isDrying ? "Drying baby carefully..." : "Now dry the baby with a clean towel") : "Baby is warm and dry!"} 
-      />
+    <View style={{ flex: 1, backgroundColor: '#111' }}>
+      <StatusBar barStyle="light-content" />
 
-      <View className="flex-1 items-center justify-center mb-60 relative">
-        <DropZone id="chest" activeZoneId={activeDropZone} style={{ width: 350, height: 450 }}>
-          <View className="items-center justify-center">
-            {/* Mother Background — base layer */}
-            <Image 
-                source={require('../assets/images/mother.png')}
-                style={{ width: 320, height: 320 }}
-                resizeMode="contain"
-            />
+      {SCENE_PROGRESSION.map((s, i) => (
+        i === sceneIndex && (
+          <Animated.View key={s.id} entering={FadeIn.duration(600)} 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
+            <ImageBackground source={s.image} style={{ flex: 1 }} resizeMode="cover" />
+          </Animated.View>
+        )
+      ))}
 
-            {/* Baby Layer — on top of mother */}
-            {babyPos && (
-              <Animated.View entering={ZoomIn} style={{ position: 'absolute', top: 80, zIndex: 2 }}>
-                <View className={`w-32 h-44 rounded-full items-center justify-center ${towelPos ? 'bg-pink-100' : 'bg-[#D1E9FF]'} border-4 border-white/60 shadow-xl shadow-pink-200`}>
-                   <View className="p-4 items-center">
-                      <Image source={require('../assets/images/baby.png')} style={{ width: 100, height: 100 }} resizeMode="contain" />
-                      <View className="mt-2 px-3 py-1 bg-white/40 rounded-full">
-                         <Text className="text-[10px] font-black tracking-widest text-[#5DA9E9]">{towelPos ? 'DRY' : 'WET'}</Text>
-                      </View>
-                   </View>
-                </View>
-              </Animated.View>
-            )}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 150, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.5)' }} />
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 300, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.65)' }} />
 
-            {/* Towel Drying Animation — over baby, semi-transparent */}
-            {isDrying && (
-              <Animated.View style={[towelStyle, { position: 'absolute', top: 80, zIndex: 3 }]}>
-                    <Image 
-                        source={require('../assets/images/towel.png')}
-                        style={{ width: 140, height: 160, opacity: 0.7 }}
-                        resizeMode="contain"
-                    />
-              </Animated.View>
-            )}
-          </View>
-        </DropZone>
-      </View>
+      <SafeAreaView style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }}>
+        <StepHeader step={11} score={score} instruction="" />
 
-      <ItemTray 
-        items={TRAY_ITEMS} 
-        usedItems={usedItems}
-        lockedItems={lockedItems}
-        onDrop={handleDrop}
-        onProximity={handleProximity} 
-      />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          {sceneIndex === 2 && (
+            <Animated.View entering={ZoomIn} style={{ alignItems:'center', backgroundColor: 'rgba(37,99,235,0.9)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 2, borderColor: '#93C5FD' }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, letterSpacing: 2 }}>DRYING BABY...</Text>
+              <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, marginTop: 10, width: 180 }}>
+                <View style={{ height: 6, backgroundColor: '#FFFFFF', borderRadius: 3, width: `${dryProgress}%` }} />
+              </View>
+            </Animated.View>
+          )}
+          {isDone && (
+            <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(236,72,153,0.9)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 20, borderWidth: 2, borderColor: '#F9A8D4' }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18, letterSpacing: 2 }}>BABY CRYING</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 4, opacity: 0.8 }}>Healthy sign!</Text>
+            </Animated.View>
+          )}
+        </View>
+
+        <View style={{ paddingHorizontal: 20, paddingBottom: 80 }}>
+          <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} 
+            style={{ backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 20, padding: 18, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 24 }}>{scene.instruction}</Text>
+          </Animated.View>
+
+          {scene.actionLabel && (
+            <Animated.View entering={FadeInUp.delay(200).duration(400)}>
+              <TouchableOpacity onPress={handleAction} disabled={transitioning} activeOpacity={0.85}
+                style={{ backgroundColor: transitioning ? '#6B7280' : '#2563EB', borderRadius: 18, paddingVertical: 18, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: transitioning ? '#4B5563' : '#1D4ED8', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12 }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 2 }}>{scene.actionLabel}</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </View>
+
+        <StepNavigation currentStep={11} />
+      </SafeAreaView>
 
       {showSuccess && (
-        <SuccessOverlay 
-          message="Skin-to-skin contact established! Baby is dry and warm." 
-          onComplete={() => {
-            setShowSuccess(false);
-            markStepComplete(11);
-          }} 
-        />
+        <SuccessOverlay message="Baby is dry, warm, and crying! Healthy signs." 
+          onComplete={() => { setShowSuccess(false); markStepComplete(11); }} />
       )}
-
-      <StepNavigation currentStep={11} />
     </View>
   );
 }
