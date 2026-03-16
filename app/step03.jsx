@@ -1,17 +1,13 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, TouchableOpacity, ImageBackground, StatusBar, Image, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { 
-  FadeIn, FadeInUp, SlideInRight, ZoomIn,
+import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
+import Animated, {
+  FadeIn, FadeInUp, SlideInRight, ZoomIn, BounceIn,
   useSharedValue, useAnimatedStyle, withTiming, withRepeat
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 
-import StepHeader from '../components/StepHeader';
-import SuccessOverlay from '../components/SuccessOverlay';
-import StepNavigation from '../components/StepNavigation';
+import GameStep from '../components/GameStep';
 import ItemTray from '../components/ItemTray';
 import DropZone from '../components/DropZone';
 import { useGame } from '../context/GameContext';
@@ -27,46 +23,42 @@ const SCENE_PROGRESSION = [
   {
     id: 'dirty',
     image: require('../assets/images/dirty hands.jpg'),
-    instruction: 'Hands are dirty and full of bacteria. Drag SOAP to hands!',
+    instruction: 'Hands are dirty! Drag SOAP to clean them.',
     requiredItem: 'soap',
-    actionLabel: null,
   },
   {
     id: 'soapy',
-    image: require('../assets/images/soap.png'),
-    instruction: 'Soap applied! Now tap to wash hands thoroughly.',
+    image: require('../assets/images/dirty hands.jpg'),
+    instruction: 'Soap applied! Tap to start washing.',
     actionLabel: 'START WASHING',
     isWashStep: true,
   },
   {
     id: 'washing',
     image: require('../assets/images/washing Hands.png'),
-    instruction: 'Scrubbing... keep washing thoroughly!',
-    actionLabel: null,
+    instruction: 'Scrubbing hands... keep going!',
     autoProgress: true,
   },
   {
     id: 'clean',
     image: require('../assets/images/clean hands.png'),
-    instruction: 'Hands are clean! Drag GLOVES to your hands.',
+    instruction: 'Hands are clean! Drag GLOVES on.',
     requiredItem: 'gloves',
-    actionLabel: null,
   },
   {
     id: 'gloved',
     image: require('../assets/images/gloves on hand.png'),
-    instruction: 'Gloves on! Hands are sterile and protected.',
-    actionLabel: null,
+    instruction: 'Gloves on! Hands are sterile.',
   },
 ];
 
-const PulsingIndicator = ({ icon = "gesture-double-tap" }) => {
+const PulsingIndicator = () => {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0.6);
 
   React.useEffect(() => {
     scale.value = withRepeat(withTiming(1.2, { duration: 1000 }), -1, true);
-    opacity.value = withRepeat(withTiming(0.1, { duration: 1000 }), -1, true);
+    opacity.value = withRepeat(withTiming(0.15, { duration: 1000 }), -1, true);
   }, []);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -76,30 +68,31 @@ const PulsingIndicator = ({ icon = "gesture-double-tap" }) => {
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
-      <Animated.View style={[{ position: 'absolute', width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(56,189,248, 0.2)' }, animStyle]} />
-      <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(56,189,248,0.4)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#BAE6FD' }}>
-        <MaterialCommunityIcons name={icon} size={28} color="#FFF" />
+      <Animated.View style={[{
+        position: 'absolute', width: 80, height: 80, borderRadius: 40,
+        backgroundColor: 'rgba(56,189,248,0.3)',
+      }, animStyle]} />
+      <View style={{
+        width: 40, height: 40, borderRadius: 20,
+        backgroundColor: 'rgba(56,189,248,0.85)',
+        justifyContent: 'center', alignItems: 'center',
+      }}>
+        <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#FFF' }} />
       </View>
     </View>
   );
 };
 
 export default function Step03() {
-  const router = useRouter();
   const { addScore, score, markStepComplete } = useGame();
-  
   const [sceneIndex, setSceneIndex] = useState(0);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const [washProgress, setWashProgress] = useState(0);
   const [usedItems, setUsedItems] = useState([]);
-  
   const [activeDropZone, setActiveDropZone] = useState(null);
-  
+
   const scene = SCENE_PROGRESSION[sceneIndex];
   const isDone = sceneIndex === SCENE_PROGRESSION.length - 1;
-
-  const dropZoneRef = useRef(null);
 
   const progressWash = useCallback(() => {
     let count = 0;
@@ -118,7 +111,7 @@ export default function Step03() {
 
   const handleAction = useCallback(() => {
     if (transitioning || isDone) return;
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch(e) {}
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     setTransitioning(true);
 
     if (scene.isWashStep) {
@@ -129,170 +122,107 @@ export default function Step03() {
     }
   }, [sceneIndex, transitioning, isDone, scene]);
 
-  // Handle Drag & Drop
   const handleProximity = (itemId, x, y) => {
-    // Roughly the center of the screen
-    const targetX = width / 2;
-    const targetY = height / 2;
-
-    const distance = Math.sqrt(Math.pow(x - targetX, 2) + Math.pow(y - targetY, 2));
-    if (distance < 400) {
-      setActiveDropZone('hands');
-    } else {
-      setActiveDropZone(null);
-    }
+    const distance = Math.sqrt(Math.pow(x - width / 2, 2) + Math.pow(y - height / 2, 2));
+    setActiveDropZone(distance < 400 ? 'hands' : null);
   };
 
   const handleDrop = (itemId, x, y) => {
     setActiveDropZone(null);
+    const distance = Math.sqrt(Math.pow(x - width / 2, 2) + Math.pow(y - height / 2, 2));
 
-    const targetX = width / 2;
-    const targetY = height / 2;
-    const distance = Math.sqrt(Math.pow(x - targetX, 2) + Math.pow(y - targetY, 2));
-
-    if (distance < 400) {
-      if (scene.requiredItem === itemId) {
-        // Success
-        setUsedItems(prev => [...prev, itemId]);
-        addScore(50);
-        
-        const nextIndex = sceneIndex + 1;
-        setSceneIndex(nextIndex);
-        
-        if (nextIndex === SCENE_PROGRESSION.length - 1) {
-          // Automatically complete
-          setTimeout(() => {
-            markStepComplete(3);
-          }, 1500);
-        }
-        return true;
+    if (distance < 400 && scene.requiredItem === itemId) {
+      setUsedItems(prev => [...prev, itemId]);
+      addScore(50);
+      const nextIndex = sceneIndex + 1;
+      setSceneIndex(nextIndex);
+      if (nextIndex === SCENE_PROGRESSION.length - 1) {
+        setTimeout(() => markStepComplete(3), 1500);
       }
+      return true;
     }
     return false;
   };
 
-  // Determine locked items for tray
-  const lockedItems = TRAY_ITEMS.map(i => i.id).filter(id => {
-    if (scene.requiredItem && scene.requiredItem === id) return false;
-    return true; // lock items not currently requested
-  });
+  const lockedItems = TRAY_ITEMS.map(i => i.id).filter(id => scene.requiredItem !== id);
+
+  const scenes = SCENE_PROGRESSION.map(s => ({
+    id: s.id,
+    image: s.image,
+    resizeMode: 'contain',
+  }));
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#111' }}>
-      <StatusBar barStyle="light-content" />
-
-      {/* Top Inventory Tray */}
-      <ItemTray 
-        items={TRAY_ITEMS}
-        usedItems={usedItems}
-        lockedItems={lockedItems}
-        onDrop={handleDrop}
-        onProximity={handleProximity}
-        position="top"
-      />
-
-      {/* Full-screen background */}
-      {SCENE_PROGRESSION.map((s, i) => (
-        i <= sceneIndex && (
-          <Animated.View 
-            key={s.id} 
-            entering={FadeIn.duration(500)} 
-            style={{ position: 'absolute', top: -80, left: 0, right: 0, bottom: 0, zIndex: 1, backgroundColor: '#050505', justifyContent: 'center', alignItems: 'center' }}
-          >
-            <Image source={s.image} style={{ width: '100%', height: '115%' }} resizeMode="contain" />
-          </Animated.View>
-        )
-      ))}
-
-      {/* Invisible Drop Zone overlay - Massive per user request */}
+    <GameStep
+      step={3}
+      score={score}
+      scenes={scenes}
+      sceneIndex={sceneIndex}
+      isDone={isDone}
+      showConfetti={isDone}
+      statusTitle="HANDS STERILE"
+      statusDetail="SAFE TO ASSIST"
+      topContent={
+        <ItemTray
+          items={TRAY_ITEMS}
+          usedItems={usedItems}
+          lockedItems={lockedItems}
+          onDrop={handleDrop}
+          onProximity={handleProximity}
+          position="top"
+        />
+      }
+    >
+      {/* Large Drop Zone */}
       <View style={{ position: 'absolute', top: '15%', left: 0, width: '100%', height: '70%', zIndex: 10 }}>
-        {!isDone && <PulsingIndicator icon="hand-wash" />}
+        {!isDone && scene.requiredItem && <PulsingIndicator icon="hand-wash" />}
         <DropZone id="hands" activeZoneId={activeDropZone} style={{ flex: 1 }} />
       </View>
-      {/* Dark overlays */}
-      <LinearGradient
-        colors={['rgba(0,0,0,0.9)', 'transparent']}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 160, zIndex: 2 }}
-        pointerEvents="none"
-      />
-      <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
-        locations={[0, 0.4, 1]}
-        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 280, zIndex: 2 }}
-        pointerEvents="none"
-      />
 
-      <SafeAreaView style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }} pointerEvents="box-none">
-        
-        {/* Header pushed down below the tray */}
-        <View pointerEvents="none" style={{ marginTop: 110 }}>
-          <StepHeader step={3} score={score} instruction="" />
-        </View>
-
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
-          {sceneIndex === 2 && (
-            <Animated.View entering={ZoomIn} style={{ alignItems: 'center' }}>
-              <View style={{ backgroundColor: 'rgba(37,99,235,0.9)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 2, borderColor: '#93C5FD' }}>
-                <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, letterSpacing: 2, textAlign: 'center' }}>WASHING...</Text>
-                <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, marginTop: 10, width: 180 }}>
-                  <View style={{ height: 6, backgroundColor: '#FFFFFF', borderRadius: 3, width: `${washProgress}%` }} />
-                </View>
+      {/* Center */}
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
+        {sceneIndex === 2 && (
+          <Animated.View entering={ZoomIn} style={{ alignItems: 'center' }}>
+            <View style={{ backgroundColor: 'rgba(37,99,235,0.9)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 2, borderColor: '#93C5FD' }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, letterSpacing: 2, textAlign: 'center' }}>WASHING...</Text>
+              <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, marginTop: 10, width: 180 }}>
+                <View style={{ height: 6, backgroundColor: '#FFFFFF', borderRadius: 3, width: `${washProgress}%` }} />
               </View>
-            </Animated.View>
-          )}
-          {isDone && (
-            <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(16,185,129,0.9)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 20, borderWidth: 2, borderColor: '#A7F3D0' }}>
-              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18, letterSpacing: 2 }}>HANDS STERILE</Text>
-            </Animated.View>
-          )}
-        </View>
-
-        {/* Bottom area */}
-        <View style={{ paddingHorizontal: 20, paddingBottom: 110 }} pointerEvents="box-none">
-          {/* Progress Indicators */}
-          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 14, gap: 8 }}>
-            {['1', '2'].map((name, i) => (
-              <View key={i} style={{ 
-                paddingHorizontal: 16, paddingVertical: 6, borderRadius: 14,
-                backgroundColor: sceneIndex > i ? 'rgba(56,189,248,0.9)' : 'rgba(0,0,0,0.4)',
-                borderWidth: 1.5, borderColor: sceneIndex > i ? '#BAE6FD' : 'rgba(255,255,255,0.1)',
-              }}>
-                <Text style={{ fontSize: 11, fontWeight: '800', color: '#FFFFFF', letterSpacing: 1 }}>{name}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Instruction Card */}
-          <Animated.View 
-            key={`instr-${sceneIndex}`}
-            entering={SlideInRight.duration(400)} 
-            style={{ 
-              backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20, padding: 18,
-              marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-            }}
-            pointerEvents="none"
-          >
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 24 }}>
-              {scene.instruction}
-            </Text>
+            </View>
           </Animated.View>
+        )}
+        {/* Center badge removed - now in GameStep */}
+      </View>
 
-          {scene.actionLabel && (
-            <Animated.View entering={FadeInUp.delay(200).duration(400)}>
-              <TouchableOpacity 
-                onPress={handleAction} disabled={transitioning} activeOpacity={0.85}
-                style={{ backgroundColor: transitioning ? '#6B7280' : '#2563EB', borderRadius: 18, paddingVertical: 18, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: transitioning ? '#4B5563' : '#1D4ED8', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12 }}
-              >
-                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 2 }}>{scene.actionLabel}</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          )}
-        </View>
+      {/* Bottom */}
+      <View style={{ paddingHorizontal: 20, paddingBottom: 30 }} pointerEvents="box-none">
+        <Animated.View
+          key={`instr-${sceneIndex}`}
+          entering={SlideInRight.duration(400)}
+          style={{
+            backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20,
+            borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)',
+          }}
+          pointerEvents="none"
+        >
+          <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>
+            {scene.instruction}
+          </Text>
+        </Animated.View>
 
-        <StepNavigation currentStep={3} />
-      </SafeAreaView>
-
-      {/* No success popups */}
-    </View>
+        {scene.actionLabel && (
+          <Animated.View entering={FadeInUp.delay(200).duration(400)} style={{ marginTop: 14 }}>
+            <TouchableOpacity onPress={handleAction} disabled={transitioning} activeOpacity={0.85}
+              style={{
+                backgroundColor: transitioning ? '#6B7280' : '#2563EB', borderRadius: 18, paddingVertical: 18,
+                alignItems: 'center', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.4, shadowRadius: 12,
+              }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 2 }}>{scene.actionLabel}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+      </View>
+    </GameStep>
   );
 }

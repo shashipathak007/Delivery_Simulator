@@ -9,6 +9,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 
 import { useGame } from '../context/GameContext';
+import Confetti from '../components/Confetti';
 
 const { width, height } = Dimensions.get('window');
 
@@ -90,7 +91,7 @@ export default function Complete() {
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 16, fontWeight: '700', letterSpacing: 1 }}>STEPS COMPLETE</Text>
-              <Text style={{ color: '#60A5FA', fontSize: 22, fontWeight: '900' }}>{completedSteps.length} / 17</Text>
+              <Text style={{ color: '#60A5FA', fontSize: 22, fontWeight: '900' }}>{completedSteps.size} / 17</Text>
             </View>
           </Animated.View>
 
@@ -104,6 +105,7 @@ export default function Complete() {
         </Animated.View>
 
       </SafeAreaView>
+      <Confetti count={50} />
     </View>
   );
 }

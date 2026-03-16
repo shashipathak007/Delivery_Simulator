@@ -12,7 +12,7 @@ export default function ItemTray({ items, usedItems = [], lockedItems = [], onDr
       style={{ 
         elevation: 15, 
         zIndex: 100, 
-        top: isTop ? 0 : undefined,
+        top: isTop ? 100 : undefined,
         bottom: isTop ? undefined : 120,
         backgroundColor: 'rgba(31, 41, 55, 0.95)',
         borderWidth: 1,

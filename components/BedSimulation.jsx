@@ -60,7 +60,7 @@ export default function BedSimulation({
       {hasMother && (
         <Animated.View entering={FadeIn.duration(600)} style={{ position: 'absolute', top: 30, bottom: 30, left: 10, right: 10, alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
            <Image 
-              source={require('../assets/images/PlaceMotherInBed.png')}
+              source={require('../assets/images/Pregnent_Mother_In_Bed.jpg')}
               style={{ width: '100%', height: '100%', transform: [{ scale: 1.05 }] }}
               resizeMode="contain"
            />
