@@ -84,30 +84,19 @@ export default function Step07() {
   return (
     <GameStep step={7} score={score} scenes={scenes} sceneIndex={0} isDone={isDone} showConfetti={isDone}>
       {/* Place START button below header (not centered) */}
-      <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', paddingTop: 150 }} pointerEvents="box-none">
+      <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', paddingTop: 0 }} pointerEvents="box-none">
         {!isDone && (
-          <View
-            style={{
-              position: 'relative',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(96,165,250,0.18)', // translucent light-blue container
-              borderRadius: 36,
-              borderWidth: 1.5,
-              borderColor: 'rgba(191,219,254,0.55)',
-              padding: 16,
-            }}
-          >
-            {/* Soft pulsing ring behind the main circle */}
+          <View style={{ width: 180, height: 180, alignItems: 'center', justifyContent: 'center' }}>
+            {/* Translucent ring directly behind the button */}
             <Animated.View
               style={[
                 animatedRingStyle,
                 {
                   position: 'absolute',
-                  width: 170,
-                  height: 170,
-                  borderRadius: 85,
-                  backgroundColor: 'rgba(96,165,250,0.65)',
+                  width: 160,
+                  height: 160,
+                  borderRadius: 80,
+                  backgroundColor: 'rgba(96,165,250,0.45)',
                 },
               ]}
               pointerEvents="none"
@@ -147,7 +136,7 @@ export default function Step07() {
 
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
         <Animated.View entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 22, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)' }}>
-          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', textAlign: 'center', letterSpacing: 1, marginBottom: 8 }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', textAlign: 'center', letterSpacing: 1, marginBottom: 10 }}>
             GUIDED BREATHING
           </Text>
           <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, fontWeight: '600', textAlign: 'center', lineHeight: 22 }}>

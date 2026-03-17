@@ -1,11 +1,10 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import Animated, {
-  FadeIn, FadeInUp, SlideInRight, ZoomIn, BounceIn,
+  FadeInUp, SlideInRight, ZoomIn,
   useSharedValue, useAnimatedStyle, withTiming, withRepeat
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import GameStep from '../components/GameStep';
 import ItemTray from '../components/ItemTray';
@@ -15,34 +14,39 @@ import { useGame } from '../context/GameContext';
 const { width, height } = Dimensions.get('window');
 
 const TRAY_ITEMS = [
-  { id: 'soap', name: 'Soap', type: 'image', icon: require('../assets/images/soap.png') },
-  { id: 'gloves', name: 'Sterile Gloves', type: 'image', icon: require('../assets/images/gloves.png') }
+  // Sanitizer asset icon wasn't provided; use a safe placeholder icon that exists.
+  { id: 'sanitizer', name: 'Sanitizer', type: 'image', icon: require('../assets/images/soap.png') },
+  { id: 'gloves', name: 'Clean Gloves', type: 'image', icon: require('../assets/images/gloves on hand.png') },
 ];
 
 const SCENE_PROGRESSION = [
   {
-    id: 'dirty',
-    image: require('../assets/images/dirty hands.jpg'),
-    instruction: 'Hands are dirty! Drag SOAP to clean them.',
-    requiredItem: 'soap',
+    id: 'nails_dirty',
+    image: require('../assets/images/dirty_OvergrownNails.png'),
+    instruction: 'Trim long nails before assisting.',
+    actionLabel: 'TRIM NAILS',
   },
   {
-    id: 'soapy',
-    image: require('../assets/images/dirty hands.jpg'),
-    instruction: 'Soap applied! Tap to start washing.',
-    actionLabel: 'START WASHING',
-    isWashStep: true,
+    id: 'nails_trimmed',
+    image: require('../assets/images/TrimmedNails.png'),
+    instruction: 'Great. Now remove rings and bracelets.',
+    actionLabel: 'REMOVE ACCESSORIES',
+  },
+  {
+    id: 'accessories_removed',
+    image: require('../assets/images/Remove_Accessories.png'),
+    instruction: 'Wash hands with sanitizer by dragging it from the top.',
+    requiredItem: 'sanitizer',
   },
   {
     id: 'washing',
     image: require('../assets/images/washing Hands.png'),
-    instruction: 'Scrubbing hands... keep going!',
-    autoProgress: true,
+    instruction: 'Sanitizing... keep going!',
   },
   {
     id: 'clean',
     image: require('../assets/images/clean hands.png'),
-    instruction: 'Hands are clean! Drag GLOVES on.',
+    instruction: 'Hands are clean. Wear clean gloves by dragging them from the top.',
     requiredItem: 'gloves',
   },
   {
@@ -103,7 +107,7 @@ export default function Step03() {
       if (count >= totalTicks) {
         clearInterval(interval);
         addScore(50);
-        setSceneIndex(3);
+        setSceneIndex(4); // move to "clean" after sanitizing
         setTransitioning(false);
         setWashProgress(0);
       }
@@ -114,14 +118,12 @@ export default function Step03() {
     if (transitioning || isDone) return;
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     setTransitioning(true);
-
-    if (scene.isWashStep) {
-      addScore(50);
-      setSceneIndex(2);
-      progressWash();
-      return;
-    }
-  }, [sceneIndex, transitioning, isDone, scene]);
+    addScore(25);
+    setTimeout(() => {
+      setSceneIndex((idx) => Math.min(idx + 1, SCENE_PROGRESSION.length - 1));
+      setTransitioning(false);
+    }, 250);
+  }, [transitioning, isDone]);
 
   const handleProximity = (itemId, x, y) => {
     const distance = Math.sqrt(Math.pow(x - width / 2, 2) + Math.pow(y - height / 2, 2));
@@ -135,12 +137,24 @@ export default function Step03() {
     if (distance < 400 && scene.requiredItem === itemId) {
       setUsedItems(prev => [...prev, itemId]);
       addScore(50);
-      const nextIndex = sceneIndex + 1;
-      setSceneIndex(nextIndex);
-      if (nextIndex === SCENE_PROGRESSION.length - 1) {
-        setTimeout(() => markStepComplete(3), 1500);
+
+      // Sanitizer triggers the washing animation phase
+      if (itemId === 'sanitizer') {
+        setTransitioning(true);
+        setSceneIndex(3); // washing
+        progressWash();
+        return true;
       }
-      return true;
+
+      // Gloves completes the step
+      if (itemId === 'gloves') {
+        const nextIndex = sceneIndex + 1;
+        setSceneIndex(nextIndex);
+        if (nextIndex === SCENE_PROGRESSION.length - 1) {
+          setTimeout(() => markStepComplete(3), 1500);
+        }
+        return true;
+      }
     }
     return false;
   };
@@ -184,10 +198,10 @@ export default function Step03() {
 
       {/* Center */}
       <View style={{ flex: 1 }} pointerEvents="none">
-        {sceneIndex === 2 && (
+        {sceneIndex === 3 && (
           <Animated.View entering={ZoomIn} style={{ position: 'absolute', top: 150, left: 0, right: 0, alignItems: 'center' }}>
             <View style={{ backgroundColor: 'rgba(37,99,235,0.9)', paddingHorizontal: 26, paddingVertical: 14, borderRadius: 20, borderWidth: 2, borderColor: '#93C5FD' }}>
-              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 14, letterSpacing: 2, textAlign: 'center' }}>WASHING...</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 14, letterSpacing: 2, textAlign: 'center' }}>SANITIZING...</Text>
               <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, marginTop: 10, width: 220 }}>
                 <View style={{ height: 6, backgroundColor: '#FFFFFF', borderRadius: 3, width: `${washProgress}%` }} />
               </View>
@@ -204,6 +218,7 @@ export default function Step03() {
           style={{
             backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20,
             borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)',
+            marginBottom: scene.actionLabel ? 14 : 0,
           }}
           pointerEvents="none"
         >
@@ -213,7 +228,7 @@ export default function Step03() {
         </Animated.View>
 
         {scene.actionLabel && (
-          <Animated.View entering={FadeInUp.delay(200).duration(400)} style={{ marginTop: 14 }}>
+          <Animated.View entering={FadeInUp.delay(200).duration(400)}>
             <TouchableOpacity onPress={handleAction} disabled={transitioning} activeOpacity={0.85}
               style={{
                 backgroundColor: transitioning ? '#6B7280' : '#2563EB', borderRadius: 18, paddingVertical: 18,

@@ -73,7 +73,7 @@ export default function Home() {
           <Animated.View entering={FadeInDown.delay(200).duration(1000)} style={{ alignItems: 'center' }}>
             <Animated.View style={[logoFloat]}>
               <View style={{ 
-                width: 140, height: 140, borderRadius: 70, 
+                width: 140, height: 140, borderRadius: 80, 
                 overflow: 'hidden',
                 borderWidth: 6, borderColor: '#F33A6A',
                 shadowColor: '#F33A6A', shadowOffset: { width: 0, height: 10 },
