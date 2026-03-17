@@ -126,7 +126,8 @@ export default function Step01() {
             {/* Pulsing indicator removed */}
             {/* Rub progress bar */}
             <View style={{
-              position: 'absolute', bottom: 10, left: '20%', right: '20%',
+              // Keep this above the bottom instruction panel so it never covers text.
+              position: 'absolute', bottom: 140, left: '20%', right: '20%',
               height: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 3,
             }}>
               <View style={{
@@ -143,7 +144,7 @@ export default function Step01() {
       </View>
 
       {/* Bottom instruction panel */}
-      <View pointerEvents="box-none" style={{ paddingHorizontal: 20, paddingBottom: 30 }}>
+      <View pointerEvents="box-none" style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
         <Animated.View
           key={`instr-${sceneIndex}`}
           entering={SlideInRight.duration(400)}

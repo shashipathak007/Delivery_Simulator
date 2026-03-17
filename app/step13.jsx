@@ -6,10 +6,10 @@ import GameStep from '../components/GameStep';
 import { useGame } from '../context/GameContext';
 
 const SCENE_PROGRESSION = [
-  { id: 'intact', image: require('../assets/images/CordIntact.png'), instruction: 'Cord has stopped pulsing. Tie the first string on baby\'s side.', actionLabel: 'TIE FIRST STRING', icon: require('../assets/images/string.jpg') },
-  { id: 'tied_left', image: require('../assets/images/TieCordOnLeft.png'), instruction: 'First tie secure! Tie second string on mother\'s side.', actionLabel: 'TIE SECOND STRING', icon: require('../assets/images/string.jpg') },
-  { id: 'tied_right', image: require('../assets/images/TiecordOnRight.png'), instruction: '⚠️ Cut the cord BETWEEN the two ties!', actionLabel: 'CUT CORD', icon: require('../assets/images/scissors.png'), isWarning: true },
-  { id: 'cut_done', image: require('../assets/images/CutTheCowd.png'), instruction: 'Cord tied and cut safely!' },
+  { id: 'intact', image: require('../assets/images/CordIntact.png'), instruction: 'Cord has stopped pulsing. Tie the first string on baby\'s side.', actionLabel: 'TIE FIRST STRING', icon: require('../assets/images/string.jpg'), resizeMode: 'contain' },
+  { id: 'tied_left', image: require('../assets/images/TieCordOnLeft.png'), instruction: 'First tie secure! Tie second string on mother\'s side.', actionLabel: 'TIE SECOND STRING', icon: require('../assets/images/string.jpg'), resizeMode: 'contain' },
+  { id: 'tied_right', image: require('../assets/images/TiecordOnRight.png'), instruction: '⚠️ Cut the cord BETWEEN the two ties!', actionLabel: 'CUT CORD', icon: require('../assets/images/scissors.png'), isWarning: true, resizeMode: 'contain' },
+  { id: 'cut_done', image: require('../assets/images/CutTheCowd.png'), instruction: 'Cord tied and cut safely!', resizeMode: 'contain' },
 ];
 
 export default function Step13() {
@@ -50,7 +50,7 @@ export default function Step13() {
           </Animated.View>
         )}
       </View>
-      <View style={{ paddingHorizontal: 20, paddingBottom: 30 }}>
+      <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
         <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: scene.isWarning ? 'rgba(239,68,68,0.2)' : 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: scene.isWarning ? 2 : 1.5, borderColor: scene.isWarning ? '#FCA5A5' : 'rgba(255,255,255,0.15)', marginBottom: 14 }}>
           <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>
         </Animated.View>

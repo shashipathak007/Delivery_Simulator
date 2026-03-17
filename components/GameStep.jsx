@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, ImageBackground, StatusBar, Text } from 'react-native';
+import { View, ImageBackground, StatusBar, Text, StyleSheet } from 'react-native';
 import Animated, { 
   FadeIn, 
   FadeOut, 
@@ -13,6 +13,7 @@ import Animated, {
   BounceIn
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import StepHeader from './StepHeader';
 import Confetti from './Confetti';
@@ -36,6 +37,7 @@ export default function GameStep({
   topContent = null,  // Optional top content (like ItemTray)
 }) {
   const zoomShared = useSharedValue(0);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     // Subtle Ken Burns effect: Zoom from 1.0 to 1.1 every 15 seconds
@@ -90,21 +92,33 @@ export default function GameStep({
       />
 
       {/* Main content area */}
-      <View style={{ flex: 1, zIndex: 3, justifyContent: 'space-between' }} pointerEvents="box-none">
+      <View style={{ flex: 1, zIndex: 3 }} pointerEvents="box-none">
         {/* Header with navigation, score, tips — all at the top */}
-        <View pointerEvents="auto" style={{ zIndex: 10 }}>
+        <View pointerEvents="auto" style={{ zIndex: 20 }}>
           <StepHeader step={step} score={score} />
         </View>
 
-        {/* Optional top content (item trays, etc) positioned after header but before children */}
-        {topContent}
+        {/* Optional top content (item trays, etc) positioned after header */}
+        <View style={{ zIndex: 15 }} pointerEvents="box-none">
+          {topContent}
+        </View>
 
-        {/* Children (center area + bottom panel) */}
-       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginBottom:300  }} pointerEvents="none">
-          {isDone && (
+        {/* Completion Banner (below Show Tip, not in the middle) */}
+        {isDone && (
+          <View
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: insets.top + 118,
+              alignItems: 'center',
+              zIndex: 100,
+            }}
+            pointerEvents="none"
+          >
             <Animated.View entering={BounceIn.delay(200)} style={{ 
               backgroundColor: 'rgba(16,185,129,0.95)', 
-              paddingHorizontal: 40, paddingVertical: 24, 
+              paddingHorizontal: 40, paddingVertical: 22, 
               borderRadius: 32, 
               borderWidth: 2, borderColor: '#A7F3D0',
               shadowColor: '#10B981', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.6, shadowRadius: 20,
@@ -113,10 +127,13 @@ export default function GameStep({
               <Text style={{ color: '#A7F3D0', fontWeight: '800', fontSize: 13, letterSpacing: 4, marginBottom: 6 }}>{statusTitle}</Text>
               <Text style={{ color: '#FFF', fontWeight: '900', fontSize: 26, letterSpacing: 1 }}>{statusDetail}</Text>
             </Animated.View>
-          )}
-        </View>
+          </View>
+        )}
 
-        {children}
+        {/* Children (Main interaction area) */}
+        <View style={{ flex: 1, zIndex: 10 }} pointerEvents="box-none">
+          {children}
+        </View>
       </View>
 
       {/* Confetti effect */}

@@ -125,7 +125,7 @@ export default function Step02() {
       </View>
 
       {/* Bottom */}
-      <View style={{ paddingHorizontal: 20, paddingBottom: 30 }} pointerEvents="box-none">
+      <View style={{ paddingHorizontal: 20, paddingBottom: 50 }} pointerEvents="box-none">
         <Animated.View
           key={`instr-${sceneIndex}`}
           entering={SlideInRight.duration(400)}

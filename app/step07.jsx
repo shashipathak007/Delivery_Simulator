@@ -83,32 +83,69 @@ export default function Step07() {
 
   return (
     <GameStep step={7} score={score} scenes={scenes} sceneIndex={0} isDone={isDone} showConfetti={isDone}>
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Animated.View style={[animatedRingStyle, { position: 'absolute', width: 140, height: 140, borderRadius: 70, backgroundColor: '#60A5FA' }]} />
-        <TouchableOpacity
-          onPress={startBreathing}
-          disabled={isBreathing}
-          activeOpacity={0.8}
-          style={{
-            width: 130, height: 130, borderRadius: 65,
-            backgroundColor: isBreathing ? '#3B82F6' : '#2563EB',
-            alignItems: 'center', justifyContent: 'center',
-            borderWidth: 4, borderColor: '#BFDBFE',
-            shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 15,
-          }}
-        >
-          <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: '900', letterSpacing: 2 }}>
-            {breathePhase === 'tap' ? 'START' : breathePhase === 'in' ? 'INHALE' : 'EXHALE'}
-          </Text>
-          {isBreathing && (
-            <Text style={{ color: '#E0F2FE', fontSize: 11, fontWeight: '800', marginTop: 4 }}>
-              CYCLE {Math.min(cycles + 1, 3)}/3
-            </Text>
-          )}
-        </TouchableOpacity>
+      {/* Place START button below header (not centered) */}
+      <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', paddingTop: 150 }} pointerEvents="box-none">
+        {!isDone && (
+          <View
+            style={{
+              position: 'relative',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(96,165,250,0.18)', // translucent light-blue container
+              borderRadius: 36,
+              borderWidth: 1.5,
+              borderColor: 'rgba(191,219,254,0.55)',
+              padding: 16,
+            }}
+          >
+            {/* Soft pulsing ring behind the main circle */}
+            <Animated.View
+              style={[
+                animatedRingStyle,
+                {
+                  position: 'absolute',
+                  width: 170,
+                  height: 170,
+                  borderRadius: 85,
+                  backgroundColor: 'rgba(96,165,250,0.65)',
+                },
+              ]}
+              pointerEvents="none"
+            />
+
+            <TouchableOpacity
+              onPress={startBreathing}
+              disabled={isBreathing}
+              activeOpacity={0.8}
+              style={{
+                width: 130,
+                height: 130,
+                borderRadius: 65,
+                backgroundColor: isBreathing ? '#3B82F6' : '#2563EB',
+                borderWidth: 4,
+                borderColor: '#BFDBFE',
+                shadowColor: '#3B82F6',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.5,
+                shadowRadius: 15,
+              }}
+            >
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: '900', letterSpacing: 2, textAlign: 'center' }}>
+                  {breathePhase === 'tap' ? 'START' : breathePhase === 'in' ? 'INHALE' : 'EXHALE'}
+                </Text>
+                {isBreathing && (
+                  <Text style={{ color: '#E0F2FE', fontSize: 12, fontWeight: '800', textAlign: 'center' }}>
+                    CYCLE {Math.min(cycles + 1, 3)}/3
+                  </Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
-      <View style={{ paddingHorizontal: 20, paddingBottom: 30 }}>
+      <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
         <Animated.View entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 22, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)' }}>
           <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', textAlign: 'center', letterSpacing: 1, marginBottom: 8 }}>
             GUIDED BREATHING

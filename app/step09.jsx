@@ -63,7 +63,8 @@ export default function Step09() {
     >
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
         {scene.isWarning && (
-          <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(239,68,68,0.95)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 3, borderColor: '#FCA5A5' }}>
+          <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(239,68,68,0.95)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20,  borderWidth: 3, borderColor: '#FCA5A5', marginTop: -450,}}
+>
             <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 20, letterSpacing: 3, textAlign: 'center' }}>⚠️ DANGER</Text>
             <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 12, textAlign: 'center', marginTop: 4 }}>Cord around neck!</Text>
           </Animated.View>
@@ -75,7 +76,7 @@ export default function Step09() {
         )}
       </View>
 
-      <View style={{ paddingHorizontal: 20, paddingBottom: 30 }}>
+      <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
         <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)}
           style={{ backgroundColor: scene.isWarning ? 'rgba(239,68,68,0.2)' : 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: scene.isWarning ? 2 : 1.5, borderColor: scene.isWarning ? '#FCA5A5' : 'rgba(255,255,255,0.15)', marginBottom: 14 }}>
           <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>

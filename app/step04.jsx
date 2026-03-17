@@ -125,7 +125,7 @@ export default function Step04() {
 
         <View pointerEvents="none" style={{ flex: 1 }} />
 
-        <Animated.View entering={SlideInUp.delay(300)} style={{ paddingHorizontal: 20, paddingBottom: 30 }} pointerEvents="box-none">
+        <Animated.View entering={SlideInUp.delay(300)} style={{ paddingHorizontal: 20, paddingBottom: 50 }} pointerEvents="box-none">
           <View style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)' }}>
             {!isDone && <PulsingIndicator />}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>

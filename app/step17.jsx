@@ -75,7 +75,7 @@ export default function Step17() {
         )}
       </View>
 
-      <View style={{ paddingHorizontal: 20, paddingBottom: 30 }}>
+      <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
         <Animated.View key={`fact-${factIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 14 }}>
           <Text style={{ color: '#F9A8D4', fontSize: 14, fontWeight: '900', textAlign: 'center', letterSpacing: 2, marginBottom: 6 }}>DID YOU KNOW?</Text>
           <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700', textAlign: 'center', lineHeight: 24, fontStyle: 'italic' }}>"{FACTS[factIndex]}"</Text>

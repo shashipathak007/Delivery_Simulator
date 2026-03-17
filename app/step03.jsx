@@ -96,10 +96,11 @@ export default function Step03() {
 
   const progressWash = useCallback(() => {
     let count = 0;
+    const totalTicks = 12; // ~3.6s total (12 * 300ms)
     const interval = setInterval(() => {
       count++;
-      setWashProgress(count * 10);
-      if (count >= 10) {
+      setWashProgress(Math.round((count / totalTicks) * 100));
+      if (count >= totalTicks) {
         clearInterval(interval);
         addScore(50);
         setSceneIndex(3);
@@ -182,22 +183,21 @@ export default function Step03() {
       </View>
 
       {/* Center */}
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
+      <View style={{ flex: 1 }} pointerEvents="none">
         {sceneIndex === 2 && (
-          <Animated.View entering={ZoomIn} style={{ alignItems: 'center' }}>
-            <View style={{ backgroundColor: 'rgba(37,99,235,0.9)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 2, borderColor: '#93C5FD' }}>
-              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, letterSpacing: 2, textAlign: 'center' }}>WASHING...</Text>
-              <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, marginTop: 10, width: 180 }}>
+          <Animated.View entering={ZoomIn} style={{ position: 'absolute', top: 150, left: 0, right: 0, alignItems: 'center' }}>
+            <View style={{ backgroundColor: 'rgba(37,99,235,0.9)', paddingHorizontal: 26, paddingVertical: 14, borderRadius: 20, borderWidth: 2, borderColor: '#93C5FD' }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 14, letterSpacing: 2, textAlign: 'center' }}>WASHING...</Text>
+              <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, marginTop: 10, width: 220 }}>
                 <View style={{ height: 6, backgroundColor: '#FFFFFF', borderRadius: 3, width: `${washProgress}%` }} />
               </View>
             </View>
           </Animated.View>
         )}
-        {/* Center badge removed - now in GameStep */}
       </View>
 
       {/* Bottom */}
-      <View style={{ paddingHorizontal: 20, paddingBottom: 30 }} pointerEvents="box-none">
+      <View style={{ paddingHorizontal: 20, paddingBottom: 50 }} pointerEvents="box-none">
         <Animated.View
           key={`instr-${sceneIndex}`}
           entering={SlideInRight.duration(400)}
