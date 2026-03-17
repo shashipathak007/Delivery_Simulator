@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, Modal, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGame } from '../context/GameContext';
@@ -166,17 +166,48 @@ export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
         </TouchableOpacity>
       </View>
 
-      {/* Tip content */}
-      {showTip && STEP_TIPS[step] && (
-        <View style={{
-          backgroundColor: 'rgba(96,165,250,0.15)', borderRadius: 14, padding: 12, marginTop: 4,
-          borderWidth: 1, borderColor: 'rgba(96,165,250,0.3)',
-        }}>
-          <Text style={{ color: '#BFDBFE', fontSize: 13, fontWeight: '700', textAlign: 'center', lineHeight: 18 }}>
-            💡 {STEP_TIPS[step]}
-          </Text>
-        </View>
-      )}
+      {/* Tip popup (center modal) */}
+      <Modal
+        transparent
+        visible={!!showTip && !!STEP_TIPS[step]}
+        animationType="fade"
+        onRequestClose={() => setShowTip(false)}
+      >
+        <Pressable
+          onPress={() => setShowTip(false)}
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            justifyContent: 'center',
+            paddingHorizontal: 20,
+          }}
+        >
+          <Pressable
+            onPress={() => {}}
+            style={{
+              backgroundColor: 'rgba(17,24,39,0.96)',
+              borderRadius: 22,
+              paddingVertical: 18,
+              paddingHorizontal: 16,
+              borderWidth: 1,
+              borderColor: 'rgba(96,165,250,0.45)',
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color="#60A5FA" />
+                <Text style={{ color: '#BFDBFE', fontSize: 13, fontWeight: '900', letterSpacing: 1 }}>TIP</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowTip(false)} activeOpacity={0.8} style={{ padding: 6 }}>
+                <MaterialCommunityIcons name="close" size={18} color="rgba(255,255,255,0.85)" />
+              </TouchableOpacity>
+            </View>
+            <Text style={{ color: '#E5E7EB', fontSize: 15, fontWeight: '700', textAlign: 'center', lineHeight: 22 }}>
+              {STEP_TIPS[step]}
+            </Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
