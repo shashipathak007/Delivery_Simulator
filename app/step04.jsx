@@ -73,6 +73,9 @@ function DraggableCollectable({ item, initialPos, onCollect }) {
       <GestureDetector gesture={panGesture}>
         <View style={{ backgroundColor: 'rgba(255,255,255,0.95)', padding: 12, borderRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5, alignItems: 'center', justifyContent: 'center' }}>
           <Image source={item.source} style={{ width: 45, height: 45 }} resizeMode="contain" />
+          <Text style={{ marginTop: 6, fontSize: 10, fontWeight: '900', color: '#111827', textAlign: 'center' }}>
+            {item.name}
+          </Text>
         </View>
       </GestureDetector>
     </Animated.View>
@@ -139,8 +142,15 @@ export default function Step04() {
               {ITEMS_TO_COLLECT.map((item) => {
                 const isCollected = collectedItems.includes(item.id);
                 return (
-                  <View key={`inv-${item.id}`} style={{ width: '22%', aspectRatio: 1, backgroundColor: isCollected ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.05)', borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: isCollected ? '#FFFFFF' : 'rgba(255,255,255,0.1)' }}>
-                    {isCollected && <Animated.View entering={ZoomIn}><Image source={item.source} style={{ width: 35, height: 35 }} resizeMode="contain" /></Animated.View>}
+                  <View key={`inv-${item.id}`} style={{ width: '22%', aspectRatio: 1, backgroundColor: isCollected ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.05)', borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: isCollected ? '#FFFFFF' : 'rgba(255,255,255,0.1)', paddingHorizontal: 4, paddingVertical: 6 }}>
+                    {isCollected && (
+                      <Animated.View entering={ZoomIn} style={{ alignItems: 'center' }}>
+                        <Image source={item.source} style={{ width: 32, height: 32 }} resizeMode="contain" />
+                        <Text style={{ marginTop: 4, fontSize: 9, fontWeight: '900', color: '#111827', textAlign: 'center' }} numberOfLines={1}>
+                          {item.name}
+                        </Text>
+                      </Animated.View>
+                    )}
                   </View>
                 );
               })}

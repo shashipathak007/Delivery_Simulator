@@ -45,19 +45,24 @@ const STEP_TIPS = {
   17: "Early breastfeeding provides colostrum (antibodies) and helps stop bleeding.",
 };
 
+const STEP_ORDER = [1, 4, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+
 export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
   const router = useRouter();
   const { isStepComplete } = useGame();
   const [showTip, setShowTip] = useState(false);
 
-  const progress = (step / totalSteps) * 100;
-  const isFirst = step === 1;
-  const isLast = step === totalSteps;
+  const currentIndex = STEP_ORDER.indexOf(step);
+  const isFirst = currentIndex === 0;
+  const isLast = currentIndex === STEP_ORDER.length - 1;
+  const progress = ((currentIndex + 1) / STEP_ORDER.length) * 100;
+  
   const completed = isStepComplete(step);
 
   const handlePrevious = () => {
     if (!isFirst) {
-      const prevStep = String(step - 1).padStart(2, '0');
+      const prevStepNum = STEP_ORDER[currentIndex - 1];
+      const prevStep = String(prevStepNum).padStart(2, '0');
       router.push(`/step${prevStep}`);
     }
   };
@@ -74,7 +79,8 @@ export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
     if (isLast) {
       router.push('/complete');
     } else {
-      const nextStep = String(step + 1).padStart(2, '0');
+      const nextStepNum = STEP_ORDER[currentIndex + 1];
+      const nextStep = String(nextStepNum).padStart(2, '0');
       router.push(`/step${nextStep}`);
     }
   };
@@ -104,7 +110,7 @@ export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ backgroundColor: 'rgba(0,0,0,0.35)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14 }}>
               <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '900', letterSpacing: 0.5 }}>
-                Step {step}/{totalSteps}
+                Step {currentIndex + 1}/{totalSteps}
               </Text>
             </View>
             <View style={{ backgroundColor: 'rgba(0,0,0,0.35)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14 }}>
@@ -174,3 +180,4 @@ export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
     </SafeAreaView>
   );
 }
+
