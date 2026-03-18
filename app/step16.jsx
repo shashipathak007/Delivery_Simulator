@@ -13,13 +13,13 @@ const { width, height } = Dimensions.get('window');
 
 const TRAY_ITEMS = [
   { id: 'blanket', name: 'Blanket', type: 'image', icon: require('../assets/images/blanket.png') },
-  { id: 'sheet', name: 'Clean Sheet', type: 'image', icon: require('../assets/images/clean_sheet.png') }
+  { id: 'blanket2', name: 'Blanket', type: 'image', icon: require('../assets/images/blanket.png') }
 ];
 
 const SCENE_PROGRESSION = [
   { id: 'exposed', image: require('../assets/images/Baby_On_MothersChest.png'), instruction: 'Drag BLANKET to cover the baby.', requiredItem: 'blanket' },
-  { id: 'baby_covered', image: require('../assets/images/Baby_On_MothersChest.png'), instruction: 'Baby warm! Drag SHEET to cover mother.', requiredItem: 'sheet' },
-  { id: 'all_covered', image: require('../assets/images/Baby_On_MothersChest.png'), instruction: 'Both are warm, safe, and resting.' },
+  { id: 'baby_covered', image: require('../assets/images/CoverBaby.png'), instruction: 'Baby warm! Drag BLANKET to cover mother.', requiredItem: 'blanket2' },
+  { id: 'all_covered', image: require('../assets/images/Mother_And_BabyCovered.png'), instruction: 'Both are warm, safe, and resting.' },
 ];
 
 const PulsingIndicator = () => {
@@ -93,18 +93,6 @@ export default function Step16() {
         {!isDone && <PulsingIndicator icon="tray-arrow-down" />}
         <DropZone id="target" activeZoneId={activeDropZone} style={{ flex: 1 }} />
       </View>
-
-      {/* Placed overlays */}
-      {sceneIndex >= 1 && (
-        <Animated.View entering={FadeIn.duration(800)} style={{ position: 'absolute', bottom: '25%', right: '15%', zIndex: 1, opacity: 0.9 }} pointerEvents="none">
-          <Image source={require('../assets/images/blanket.png')} style={{ width: 120, height: 120 }} resizeMode="contain" />
-        </Animated.View>
-      )}
-      {sceneIndex >= 2 && (
-        <Animated.View entering={FadeIn.duration(800)} style={{ position: 'absolute', top: '35%', left: '5%', zIndex: 1, opacity: 0.8 }} pointerEvents="none">
-          <Image source={require('../assets/images/clean_sheet.png')} style={{ width: 220, height: 220, transform: [{ rotate: '-10deg' }] }} resizeMode="contain" />
-        </Animated.View>
-      )}
 
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none" />
 

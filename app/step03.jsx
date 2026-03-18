@@ -14,7 +14,7 @@ import { useGame } from '../context/GameContext';
 const { width, height } = Dimensions.get('window');
 
 const TRAY_ITEMS = [
-  // Sanitizer asset icon wasn't provided; use a safe placeholder icon that exists.
+  
   { id: 'sanitizer', name: 'Sanitizer', type: 'image', icon: require('../assets/images/soap.png') },
   { id: 'gloves', name: 'Clean Gloves', type: 'image', icon: require('../assets/images/gloves on hand.png') },
 ];

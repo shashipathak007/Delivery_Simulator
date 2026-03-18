@@ -14,7 +14,7 @@ const FACTS = [
 ];
 
 const scenes = [
-  { id: 'nursing', image: require('../assets/images/Baby_On_MothersChest.png') },
+  { id: 'nursing', image: require('../assets/images/BrestFeeding.png') },
 ];
 
 export default function Step17() {
@@ -50,21 +50,26 @@ export default function Step17() {
   };
 
   return (
-    <GameStep step={17} score={score} scenes={scenes} sceneIndex={0} isDone={isDone} showConfetti={isDone}>
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
-        {isLatching && timeLeft > 0 && (
-          <Animated.View entering={ZoomIn.springify()} style={{ alignItems: 'center' }}>
-            <View style={{ backgroundColor: 'rgba(236,72,153,0.95)', paddingHorizontal: 36, paddingVertical: 20, borderRadius: 24, borderWidth: 3, borderColor: '#F9A8D4', alignItems: 'center', shadowColor: '#EC4899', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 15 }}>
-              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, letterSpacing: 2 }}>NURSING TIME</Text>
-              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 36, letterSpacing: 2, marginTop: 4 }}>{timeLeft}m</Text>
-            </View>
+    <GameStep
+      step={17}
+      score={score}
+      scenes={scenes}
+      sceneIndex={0}
+      isDone={isDone}
+      showConfetti={isDone}
+      topContent={isLatching && timeLeft > 0 && (
+        <View style={{ alignItems: 'center', paddingTop: 4 }}>
+          <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(236,72,153,0.95)', paddingHorizontal: 36, paddingVertical: 16, borderRadius: 24, borderWidth: 3, borderColor: '#F9A8D4', alignItems: 'center', shadowColor: '#EC4899', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 15 }}>
+            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, letterSpacing: 2 }}>NURSING TIME</Text>
+            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 36, letterSpacing: 2, marginTop: 4 }}>{timeLeft}m</Text>
           </Animated.View>
-        )}
-        {/* removed */}
-      </View>
+        </View>
+      )}
+    >
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none" />
 
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
-        <Animated.View key={`fact-${factIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 22 }}>
+        <Animated.View key={`fact-${factIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 2 }}>
           <Text style={{ color: '#F9A8D4', fontSize: 14, fontWeight: '900', textAlign: 'center', letterSpacing: 2, marginBottom: 6 }}>DID YOU KNOW?</Text>
           <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700', textAlign: 'center', lineHeight: 24, fontStyle: 'italic' }}>"{FACTS[factIndex]}"</Text>
         </Animated.View>

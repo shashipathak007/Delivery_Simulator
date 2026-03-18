@@ -126,20 +126,27 @@ export default function Step12() {
         {sceneIndex === 1 && (
           <View style={{ position: 'absolute', width: 300, height: 400, zIndex: 5 }}>
             <DropZone id="baby" activeZoneId={activeDropZone} style={{ flex: 1 }} />
-            <View style={{ position: 'absolute', top: '50%', left: '50%', transform: [{translateX: -40}, {translateY: -20}], backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 12 }}>
-              <Text style={{ color: '#FFF', fontWeight: '900', fontSize: 10 }}>RUB HERE</Text>
-            </View>
           </View>
-        )}
-        {sceneIndex === 2 && (
-          <Animated.View entering={ZoomIn} style={{ backgroundColor: 'rgba(236,72,153,0.9)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 2, borderColor: '#F9A8D4' }}>
-            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 28, letterSpacing: 2 }}>{tapCount} / 5</Text>
-            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 4 }}>Taps</Text>
-          </Animated.View>
         )}
       </View>
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
-        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 22 }}>
+        {sceneIndex === 1 && !isDone && (
+          <Animated.View entering={ZoomIn} style={{ alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 13, letterSpacing: 2, marginBottom: 8, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }}>RUBBING BACK... {rubCount}/5</Text>
+            <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, width: 200, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3 }}>
+              <View style={{ height: 6, backgroundColor: '#4ADE80', borderRadius: 3, width: `${Math.min((rubCount / 5) * 100, 100)}%` }} />
+            </View>
+          </Animated.View>
+        )}
+        {sceneIndex === 2 && !isDone && (
+          <Animated.View entering={ZoomIn} style={{ alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 13, letterSpacing: 2, marginBottom: 8, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }}>TAPPING FEET... {tapCount}/5</Text>
+            <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, width: 200, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3 }}>
+              <View style={{ height: 6, backgroundColor: '#EC4899', borderRadius: 3, width: `${Math.min((tapCount / 5) * 100, 100)}%` }} />
+            </View>
+          </Animated.View>
+        )}
+        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 2 }}>
           <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>
         </Animated.View>
         {scene.actionLabel && !isScreenTapInteractive && (

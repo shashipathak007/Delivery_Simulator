@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ImageBackground } from 'react-native';
 import Animated, {
   SlideInRight,
   useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, Easing,
-  runOnJS
+  runOnJS, FadeIn, FadeOut
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import GameStep from '../components/GameStep';
@@ -22,15 +22,11 @@ export default function Step07() {
   const ringScale = useSharedValue(1);
   const ringOpacity = useSharedValue(0.2);
 
-  // Dynamic scene with FIXED id — GameStep won't trigger fade animations,
-  // just swaps the image source instantly (no black screen, no overlay needed)
+  // Use a FIXED id so GameStep never triggers fade transitions between images.
+  // We handle the image swap ourselves with a layered approach below.
   const scenes = useMemo(() => {
-    let currentImage = BASE_IMAGE;
-    let phaseId = 'tap';
-    if (breathePhase === 'in') { currentImage = INHALE_IMAGE; phaseId = 'in'; }
-    else if (breathePhase === 'out') { currentImage = EXHALE_IMAGE; phaseId = 'out'; }
-    return [{ id: phaseId, image: currentImage }];
-  }, [breathePhase]);
+    return [{ id: 'breathing', image: BASE_IMAGE }];
+  }, []);
 
   const handleBreathingComplete = useCallback(() => {
     addScore(100);
@@ -89,6 +85,10 @@ export default function Step07() {
 
   const isDone = cycles >= 3;
 
+  // Determine which image to show based on phase
+  const showInhale = breathePhase === 'in';
+  const showExhale = breathePhase === 'out';
+
   return (
     <GameStep 
       step={7} 
@@ -97,8 +97,26 @@ export default function Step07() {
       sceneIndex={0} 
       isDone={isDone} 
       showConfetti={isDone}
-      transitionDuration={300}
+      transitionDuration={0}
     >
+      {/* Layered breathing images — both always mounted, opacity swapped instantly */}
+      {isBreathing && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2 }} pointerEvents="none">
+          {/* Inhale image layer */}
+          <ImageBackground
+            source={INHALE_IMAGE}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: showInhale ? 1 : 0 }}
+            resizeMode="cover"
+          />
+          {/* Exhale image layer */}
+          <ImageBackground
+            source={EXHALE_IMAGE}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: showExhale ? 1 : 0 }}
+            resizeMode="cover"
+          />
+        </View>
+      )}
+
       {/* Place START button below header (not centered) */}
       <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', paddingTop: 0 }} pointerEvents="box-none">
         {!isDone && (

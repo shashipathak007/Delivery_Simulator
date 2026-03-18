@@ -10,8 +10,8 @@ const { width, height } = Dimensions.get('window');
 
 const SCENE_PROGRESSION = [
   { id: 'start', image: require('../assets/images/Baby_On_MothersChest.png'), instruction: 'Massage the abdomen to prevent bleeding.', actionLabel: 'START MASSAGE' },
-  { id: 'massaging', image: require('../assets/images/Baby_On_MothersChest.png'), instruction: 'Massage firmly in circular motions!', actionLabel: 'MASSAGE', isInteractive: true },
-  { id: 'done', image: require('../assets/images/Baby_On_MothersChest.png'), instruction: 'The uterus feels firm. Bleeding controlled!' },
+  { id: 'massaging', image: require('../assets/images/Massaging.png'), instruction: 'Massage firmly in circular motions!', actionLabel: 'MASSAGE', isInteractive: true },
+  { id: 'done', image: require('../assets/images/Massage_LowerAbdomen.png'), instruction: 'The uterus feels firm. Bleeding controlled!' },
 ];
 
 export default function Step15() {
@@ -83,16 +83,17 @@ export default function Step15() {
           </View>
         </GestureDetector>
       )}
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
-        {sceneIndex === 1 && (
-          <Animated.View entering={ZoomIn} style={{ backgroundColor: 'rgba(236,72,153,0.9)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 2, borderColor: '#F9A8D4', zIndex: 20, }}>
-            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 28, letterSpacing: 2 }}>{massageCount} / 20</Text>
-            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 4 }}>Massages</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none" />
+      <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
+        {sceneIndex === 1 && !isDone && (
+          <Animated.View entering={ZoomIn} style={{ alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 13, letterSpacing: 2, marginBottom: 8, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }}>MASSAGING... {massageCount}/20</Text>
+            <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, width: 200, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3 }}>
+              <View style={{ height: 6, backgroundColor: '#EC4899', borderRadius: 3, width: `${Math.min((massageCount / 20) * 100, 100)}%` }} />
+            </View>
           </Animated.View>
         )}
-      </View>
-      <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
-        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 22 }}>
+        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 2 }}>
           <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>
         </Animated.View>
         {scene.actionLabel && sceneIndex === 0 && (

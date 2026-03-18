@@ -49,7 +49,7 @@ const SCENE_PROGRESSION = [
   },
   {
     id: 'supported',
-    image: require('../assets/images/Crowning.png'),
+    image: require('../assets/images/Towel_UnderBabyHead.png'),
     instruction: 'Towel placed! Head is supported and cushioned.',
   },
 ];
@@ -125,7 +125,7 @@ export default function Step08() {
 
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
         <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)}
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 22 }}>
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 2 }}>
           <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>
         </Animated.View>
 
