@@ -75,7 +75,7 @@ export default function Home() {
               <View style={{ 
                 width: 140, height: 140, borderRadius: 80, 
                 overflow: 'hidden',
-                borderWidth: 6, borderColor: '#F33A6A',
+                borderWidth: 7, borderColor: '#F33A6A',
                 shadowColor: '#F33A6A', shadowOffset: { width: 0, height: 10 },
                 shadowOpacity: 0.6, shadowRadius: 20, elevation: 20,
                 marginBottom: 25,
@@ -83,7 +83,7 @@ export default function Home() {
               }}>
                 <Image 
                   source={require('../assets/images/logo.png')} 
-                  style={{ width: 140, height: 140 }} 
+                  style={{ width: 130, height: 130 }} 
                   resizeMode="contain" 
                 />
               </View>

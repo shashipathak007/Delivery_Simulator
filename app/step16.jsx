@@ -29,15 +29,15 @@ const PulsingIndicator = () => {
     scale.value = withRepeat(withTiming(1.2, { duration: 1000 }), -1, true);
     opacity.value = withRepeat(withTiming(0.15, { duration: 1000 }), -1, true);
   }, []);
-  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }], opacity: opacity.value }));
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
-      <Animated.View style={[{ position: 'absolute', width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,200,50,0.3)' }, animStyle]} />
-      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,200,50,0.85)', justifyContent: 'center', alignItems: 'center' }}>
-        <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#FFF' }} />
-      </View>
-    </View>
-  );
+  // const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }], opacity: opacity.value }));
+  // return (
+  //   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
+  //     <Animated.View style={[{ position: 'absolute', width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,200,50,0.3)' }, animStyle]} />
+  //     {/* <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,200,50,0.85)', justifyContent: 'center', alignItems: 'center' }}>
+  //       <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#FFF' }} />
+  //     </View> */}
+  //   </View>
+  // );
 };
 
 export default function Step16() {
