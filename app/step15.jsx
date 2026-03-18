@@ -97,16 +97,28 @@ export default function Step15() {
             </View>
           </Animated.View>
         )}
-        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 2 }}>
-          <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>
-        </Animated.View>
-        {scene.actionLabel && sceneIndex === 0 && (
-          <Animated.View entering={FadeInUp.delay(100)}>
-            <TouchableOpacity onPress={handleAction} disabled={transitioning} activeOpacity={0.7}
-              style={{ backgroundColor: transitioning ? '#6B7280' : '#EC4899', borderRadius: 18, paddingVertical: 20, alignItems: 'center', shadowColor: '#EC4899', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', letterSpacing: 2 }}>{scene.actionLabel}</Text>
-            </TouchableOpacity>
+        <View style={{ marginBottom: (scene.actionLabel && sceneIndex === 0) ? 20 : 0, zIndex: 1 }} pointerEvents="none">
+          <Animated.View 
+            key={`instr-${sceneIndex}`} 
+            entering={SlideInRight.duration(400)} 
+            style={{ 
+              backgroundColor: 'rgba(0,0,0,0.5)', 
+              borderRadius: 24, padding: 20, 
+              borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)'
+            }}
+          >
+            <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>
           </Animated.View>
+        </View>
+        {scene.actionLabel && sceneIndex === 0 && (
+          <View style={{ zIndex: 10 }}>
+            <Animated.View entering={FadeInUp.delay(100)}>
+              <TouchableOpacity onPress={handleAction} disabled={transitioning} activeOpacity={0.7}
+                style={{ backgroundColor: transitioning ? '#6B7280' : '#EC4899', borderRadius: 18, paddingVertical: 20, alignItems: 'center', shadowColor: '#EC4899', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12 }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', letterSpacing: 2 }}>{scene.actionLabel}</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
         )}
       </View>
     </GameStep>

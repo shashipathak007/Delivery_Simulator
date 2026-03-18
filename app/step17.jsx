@@ -69,17 +69,29 @@ export default function Step17() {
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none" />
 
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
-        <Animated.View key={`fact-${factIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 2 }}>
-          <Text style={{ color: '#F9A8D4', fontSize: 14, fontWeight: '900', textAlign: 'center', letterSpacing: 2, marginBottom: 6 }}>DID YOU KNOW?</Text>
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700', textAlign: 'center', lineHeight: 24, fontStyle: 'italic' }}>"{FACTS[factIndex]}"</Text>
-        </Animated.View>
-        {!isLatching && (
-          <Animated.View entering={FadeInUp.delay(200)}>
-            <TouchableOpacity onPress={handleLatch} activeOpacity={0.85}
-              style={{ backgroundColor: '#EC4899', borderRadius: 18, paddingVertical: 20, alignItems: 'center', shadowColor: '#EC4899', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.5, shadowRadius: 12 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 1.5 }}>BEGIN FIRST FEEDING</Text>
-            </TouchableOpacity>
+        <View style={{ marginBottom: !isLatching ? 20 : 0, zIndex: 1 }} pointerEvents="none">
+          <Animated.View 
+            key={`fact-${factIndex}`} 
+            entering={SlideInRight.duration(400)} 
+            style={{ 
+              backgroundColor: 'rgba(0,0,0,0.5)', 
+              borderRadius: 24, padding: 20, 
+              borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)'
+            }}
+          >
+            <Text style={{ color: '#F9A8D4', fontSize: 14, fontWeight: '900', textAlign: 'center', letterSpacing: 2, marginBottom: 6 }}>DID YOU KNOW?</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700', textAlign: 'center', lineHeight: 24, fontStyle: 'italic' }}>"{FACTS[factIndex]}"</Text>
           </Animated.View>
+        </View>
+        {!isLatching && (
+          <View style={{ zIndex: 10 }}>
+            <Animated.View entering={FadeInUp.delay(200)}>
+              <TouchableOpacity onPress={handleLatch} activeOpacity={0.85}
+                style={{ backgroundColor: '#EC4899', borderRadius: 18, paddingVertical: 20, alignItems: 'center', shadowColor: '#EC4899', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.5, shadowRadius: 12 }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 1.5 }}>BEGIN FIRST FEEDING</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
         )}
       </View>
     </GameStep>

@@ -67,15 +67,7 @@ export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
     }
   };
 
-  const handleNext = () => {
-    if (!completed) {
-      Alert.alert(
-        '⚠️ Step Not Complete!',
-        STEP_ALERTS[step] || 'Complete this step before moving on!',
-        [{ text: 'OK', style: 'default' }]
-      );
-      return;
-    }
+  const navigateToNext = () => {
     if (isLast) {
       router.push('/complete');
     } else {
@@ -83,6 +75,21 @@ export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
       const nextStep = String(nextStepNum).padStart(2, '0');
       router.push(`/step${nextStep}`);
     }
+  };
+
+  const handleNext = () => {
+    if (!completed) {
+      Alert.alert(
+        '⚠️ Step Not Complete!',
+        STEP_ALERTS[step] || 'Complete this step before moving on!',
+        [
+          { text: 'Keep Playing', style: 'cancel' },
+          { text: 'Skip Step', style: 'destructive', onPress: navigateToNext }
+        ]
+      );
+      return;
+    }
+    navigateToNext();
   };
 
   return (
