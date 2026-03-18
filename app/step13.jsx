@@ -21,7 +21,7 @@ export default function Step13() {
 
   const handleAction = useCallback(() => {
     if (transitioning || isDone) return;
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) { }
     setTransitioning(true);
     addScore(50);
     setTimeout(() => {
@@ -38,20 +38,14 @@ export default function Step13() {
     <GameStep step={13} score={score} scenes={SCENE_PROGRESSION} sceneIndex={sceneIndex} isDone={isDone} showConfetti={isDone}>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
         {scene.isWarning && (
-          <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(239,68,68,0.95)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 3, borderColor: '#FCA5A5' }}>
+          <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(239,68,68,0.95)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 3, borderColor: '#FCA5A5', marginTop: -475 }}>
             <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18, letterSpacing: 2, textAlign: 'center' }}>⚠️ CAUTION</Text>
             <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 4 }}>Cut in the middle!</Text>
           </Animated.View>
         )}
-        {isDone && (
-          <Animated.View entering={BounceIn} style={{ backgroundColor: 'rgba(16,185,129,0.95)', paddingHorizontal: 32, paddingVertical: 20, borderRadius: 28, borderWidth: 2, borderColor: '#A7F3D0', shadowColor: '#10B981', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.6, shadowRadius: 20, alignItems: 'center' }}>
-            <Text style={{ color: '#A7F3D0', fontWeight: '800', fontSize: 12, letterSpacing: 3, marginBottom: 4 }}>STEP COMPLETE</Text>
-            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 22, letterSpacing: 2 }}>CORD CUT</Text>
-          </Animated.View>
-        )}
       </View>
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
-        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: scene.isWarning ? 'rgba(239,68,68,0.2)' : 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: scene.isWarning ? 2 : 1.5, borderColor: scene.isWarning ? '#FCA5A5' : 'rgba(255,255,255,0.15)', marginBottom: 14 }}>
+        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: scene.isWarning ? 'rgba(239,68,68,0.2)' : 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: scene.isWarning ? 2 : 1.5, borderColor: scene.isWarning ? '#FCA5A5' : 'rgba(255,255,255,0.15)', marginBottom: 22 }}>
           <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>
         </Animated.View>
         {scene.actionLabel && (

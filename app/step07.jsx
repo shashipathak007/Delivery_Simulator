@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, {
   SlideInRight,
@@ -9,9 +9,9 @@ import * as Haptics from 'expo-haptics';
 import GameStep from '../components/GameStep';
 import { useGame } from '../context/GameContext';
 
-const scenes = [
-  { id: 'breathing', image: require('../assets/images/Pregnent_Mother_In_Bed.jpg') },
-];
+const INHALE_IMAGE = require('../assets/images/Inhale.png');
+const EXHALE_IMAGE = require('../assets/images/Exhale.png');
+const BASE_IMAGE = require('../assets/images/Pregnent_Mother_In_Bed.jpg');
 
 export default function Step07() {
   const { addScore, score, markStepComplete } = useGame();
@@ -22,11 +22,29 @@ export default function Step07() {
   const ringScale = useSharedValue(1);
   const ringOpacity = useSharedValue(0.2);
 
-  // ✅ Safe JS callback — called via runOnJS from the UI thread
+  // Dynamic scene with FIXED id — GameStep won't trigger fade animations,
+  // just swaps the image source instantly (no black screen, no overlay needed)
+  const scenes = useMemo(() => {
+    let currentImage = BASE_IMAGE;
+    let phaseId = 'tap';
+    if (breathePhase === 'in') { currentImage = INHALE_IMAGE; phaseId = 'in'; }
+    else if (breathePhase === 'out') { currentImage = EXHALE_IMAGE; phaseId = 'out'; }
+    return [{ id: phaseId, image: currentImage }];
+  }, [breathePhase]);
+
   const handleBreathingComplete = useCallback(() => {
     addScore(100);
     setTimeout(() => markStepComplete(7), 1500);
   }, [addScore, markStepComplete]);
+
+  const updatePhase = (phase) => {
+    setBreathePhase(phase);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { }
+  };
+  
+  const incrementCycle = () => {
+    setCycles(p => p + 1);
+  };
 
   const startBreathing = () => {
     if (isBreathing) return;
@@ -36,14 +54,21 @@ export default function Step07() {
 
     ringScale.value = withRepeat(
       withSequence(
-        withTiming(1.6, { duration: 4000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 4000, easing: Easing.inOut(Easing.ease) })
+        withTiming(1.6, { duration: 4000, easing: Easing.inOut(Easing.ease) }, (finished) => {
+          if (finished) runOnJS(updatePhase)('out');
+        }),
+        withTiming(1, { duration: 4000, easing: Easing.inOut(Easing.ease) }, (finished) => {
+          if (finished) {
+            runOnJS(updatePhase)('in');
+            runOnJS(incrementCycle)();
+          }
+        })
       ),
       3,
       false,
       (finished) => {
         'worklet';
-        if (finished) runOnJS(handleBreathingComplete)(); // ✅ fixed
+        if (finished) runOnJS(handleBreathingComplete)();
       }
     );
 
@@ -57,23 +82,6 @@ export default function Step07() {
     );
   };
 
-  useEffect(() => {
-    if (!isBreathing) return;
-    let outTimer, cycleTimer;
-    const runCycle = () => {
-      setBreathePhase('in');
-      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { }
-      outTimer = setTimeout(() => {
-        setBreathePhase('out');
-        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { }
-      }, 4000);
-      cycleTimer = setTimeout(() => setCycles(p => p + 1), 8000);
-    };
-    runCycle();
-    const interval = setInterval(runCycle, 8000);
-    return () => { clearTimeout(outTimer); clearTimeout(cycleTimer); clearInterval(interval); };
-  }, [isBreathing]);
-
   const animatedRingStyle = useAnimatedStyle(() => ({
     transform: [{ scale: ringScale.value }],
     opacity: ringOpacity.value,
@@ -82,12 +90,19 @@ export default function Step07() {
   const isDone = cycles >= 3;
 
   return (
-    <GameStep step={7} score={score} scenes={scenes} sceneIndex={0} isDone={isDone} showConfetti={isDone}>
+    <GameStep 
+      step={7} 
+      score={score} 
+      scenes={scenes} 
+      sceneIndex={0} 
+      isDone={isDone} 
+      showConfetti={isDone}
+      transitionDuration={300}
+    >
       {/* Place START button below header (not centered) */}
       <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', paddingTop: 0 }} pointerEvents="box-none">
         {!isDone && (
           <View style={{ width: 180, height: 180, alignItems: 'center', justifyContent: 'center' }}>
-            {/* Translucent ring directly behind the button */}
             <Animated.View
               style={[
                 animatedRingStyle,
@@ -110,10 +125,12 @@ export default function Step07() {
                 width: 130,
                 height: 130,
                 borderRadius: 65,
-                backgroundColor: isBreathing ? '#3B82F6' : '#2563EB',
+                backgroundColor: isBreathing
+                  ? (breathePhase === 'in' ? '#3B82F6' : '#8B5CF6')
+                  : '#2563EB',
                 borderWidth: 4,
-                borderColor: '#BFDBFE',
-                shadowColor: '#3B82F6',
+                borderColor: breathePhase === 'out' ? '#DDD6FE' : '#BFDBFE',
+                shadowColor: breathePhase === 'out' ? '#8B5CF6' : '#3B82F6',
                 shadowOffset: { width: 0, height: 8 },
                 shadowOpacity: 0.5,
                 shadowRadius: 15,
@@ -140,7 +157,11 @@ export default function Step07() {
             GUIDED BREATHING
           </Text>
           <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, fontWeight: '600', textAlign: 'center', lineHeight: 22 }}>
-            Breathe slowly with the circle to manage pain.
+            {breathePhase === 'in'
+              ? '🫁 Breathe IN slowly… expand your lungs.'
+              : breathePhase === 'out'
+                ? '💨 Breathe OUT gently… release the tension.'
+                : 'Breathe slowly with the circle to manage pain.'}
           </Text>
         </Animated.View>
       </View>

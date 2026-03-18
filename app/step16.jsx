@@ -106,21 +106,7 @@ export default function Step16() {
         </Animated.View>
       )}
 
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
-        {isDone && (
-          <Animated.View entering={BounceIn} style={{ 
-            backgroundColor: 'rgba(16,185,129,0.95)', 
-            paddingHorizontal: 36, paddingVertical: 20, 
-            borderRadius: 28, 
-            borderWidth: 2, borderColor: '#A7F3D0', 
-            shadowColor: '#10B981', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.6, shadowRadius: 20, 
-            alignItems: 'center' 
-          }}>
-            <Text style={{ color: '#A7F3D0', fontWeight: '800', fontSize: 12, letterSpacing: 3, marginBottom: 4 }}>STEP COMPLETE</Text>
-            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 22, letterSpacing: 1 }}>WARM & SAFE</Text>
-          </Animated.View>
-        )}
-      </View>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none" />
 
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }} pointerEvents="box-none">
         <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)' }} pointerEvents="none">

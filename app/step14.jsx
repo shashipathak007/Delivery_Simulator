@@ -24,7 +24,7 @@ export default function Step14() {
     if (sceneIndex === 0 && waitTime > 0) {
       interval = setInterval(() => setWaitTime(p => p - 1), 300);
     } else if (sceneIndex === 0 && waitTime === 0) {
-      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) { }
       setSceneIndex(1);
     }
     return () => clearInterval(interval);
@@ -32,7 +32,7 @@ export default function Step14() {
 
   const handleAction = useCallback(() => {
     if (transitioning || isDone) return;
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) { }
     setTransitioning(true);
     addScore(100);
     setTimeout(() => {
@@ -46,26 +46,20 @@ export default function Step14() {
     <GameStep step={14} score={score} scenes={SCENE_PROGRESSION} sceneIndex={sceneIndex} isDone={isDone} showConfetti={isDone}>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
         {scene.isWarning && waitTime > 0 && (
-          <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(239,68,68,0.95)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 3, borderColor: '#FCA5A5', alignItems: 'center' }}>
+          <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(239,68,68,0.95)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 3, borderColor: '#FCA5A5', alignItems: 'center', marginTop: -470 }}>
             <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18, letterSpacing: 2 }}>DO NOT PULL CORD</Text>
             <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 32, letterSpacing: 2, marginTop: 10 }}>{waitTime} m</Text>
             <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 4 }}>Waiting for placenta...</Text>
           </Animated.View>
         )}
         {scene.showPlacenta && (
-          <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(255,255,255,0.95)', padding: 15, borderRadius: 30, borderWidth: 4, borderColor: '#E5E7EB', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 15 }}>
+          <Animated.View entering={ZoomIn.springify()} style={{ backgroundColor: 'rgba(255,255,255,0.95)', padding: 15, borderRadius: 30, borderWidth: 4, borderColor: '#E5E7EB', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 15, marginTop: -350, marginBottom: 20 }}>
             <Image source={require('../assets/images/placenta.png')} style={{ width: 100, height: 100 }} resizeMode="contain" />
-          </Animated.View>
-        )}
-        {isDone && (
-          <Animated.View entering={BounceIn} style={{ backgroundColor: 'rgba(16,185,129,0.95)', paddingHorizontal: 32, paddingVertical: 20, borderRadius: 28, borderWidth: 2, borderColor: '#A7F3D0', shadowColor: '#10B981', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.6, shadowRadius: 20, alignItems: 'center' }}>
-            <Text style={{ color: '#A7F3D0', fontWeight: '800', fontSize: 12, letterSpacing: 3, marginBottom: 4 }}>STEP COMPLETE</Text>
-            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 22, letterSpacing: 2 }}>PLACENTA SECURED</Text>
           </Animated.View>
         )}
       </View>
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
-        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: scene.isWarning ? 'rgba(239,68,68,0.2)' : 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: scene.isWarning ? 2 : 1.5, borderColor: scene.isWarning ? '#FCA5A5' : 'rgba(255,255,255,0.15)', marginBottom: 14 }}>
+        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: scene.isWarning ? 'rgba(239,68,68,0.2)' : 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: scene.isWarning ? 2 : 1.5, borderColor: scene.isWarning ? '#FCA5A5' : 'rgba(255,255,255,0.15)', marginBottom: 22 }}>
           <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>
         </Animated.View>
         {scene.actionLabel && (

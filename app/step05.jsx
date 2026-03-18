@@ -126,15 +126,35 @@ export default function Step05() {
       }
     >
       {/* ── Center Drop Zone Area ── */}
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', zIndex: 5 }}>
-        
-        {/* Invisible Drop Zone taking up middle of screen */}
-        {!allInPot && !boiling && !sterilized && (
-          <View style={{ position: 'absolute', top: '30%', left: '20%', width: '60%', height: '40%', zIndex: 10 }}>
-            <DropZone id="center_pot" activeZoneId={activeDropZone} style={{ flex: 1, backgroundColor: activeDropZone ? 'rgba(74,222,128,0.2)' : 'transparent', borderRadius: 20 }} />
-          </View>
-        )}
-      </View>
+   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', zIndex: 5 }}>
+  
+  {/* Invisible Drop Zone taking up middle of screen */}
+  {!allInPot && !boiling && !sterilized && (
+    <View
+      style={{
+        position: 'absolute',
+        top: '25%',
+        width: '85%',
+        height: '45%',
+        alignSelf: 'center',
+        zIndex: 0,
+      }}
+    >
+      <DropZone
+        id="center_pot"
+        activeZoneId={activeDropZone}
+        style={{
+          flex: 1,
+          backgroundColor: activeDropZone
+            ? 'rgba(0,0,0,0)'
+            : 'transparent',
+          borderRadius: 20,
+        }}
+      />
+    </View>
+  )}
+
+</View>
 
       {/* ── Instruction + boil button ── */}
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>

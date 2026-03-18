@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   FadeIn, SlideInRight, ZoomIn, BounceIn,
-  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSpring
+  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSpring, runOnJS
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -31,7 +32,7 @@ const SCENE_PROGRESSION = [
     id: 'windows_closed',
     image: require('../assets/images/Closed_Window.jpg'),
     instruction: 'Windows closed! Now tap the lamp to turn it on.',
-    interactZone: { top: '45%', right: '0%', width: '25%', height: '25%' },
+    interactZone: { top: '0%', right: '0%', width: '100%', height: '100%' },
     interactType: 'tap',
   },
   {
@@ -45,7 +46,7 @@ const SCENE_PROGRESSION = [
     id: 'fans_off',
     image: require('../assets/images/Fan_Off.jpg'),
     instruction: 'Great! Now dust the bed to clean it.',
-    interactZone: { top: '50%', left: '10%', right: '10%', bottom: '10%' },
+    interactZone: { top: '0%', left: '0%', width: '100%', height: '100%' },
     interactType: 'rub',
   },
   {
@@ -83,7 +84,10 @@ export default function Step01() {
     }, 300);
   }, [sceneIndex, transitioning, isDone]);
 
-  const handleRub = () => {
+  const distance = useSharedValue(0);
+  const lastPos = useSharedValue({ x: 0, y: 0 });
+
+  const handleRub = useCallback(() => {
     if (transitioning || isDone || scene.interactType !== 'rub') return;
     setRubProgress(prev => {
       const newProgress = prev + 1;
@@ -92,7 +96,23 @@ export default function Step01() {
       }
       return newProgress;
     });
-  };
+  }, [transitioning, isDone, scene.interactType, handleAction]);
+
+  const panGesture = Gesture.Pan()
+    .enabled(scene.interactType === 'rub' && !transitioning && !isDone)
+    .onBegin((e) => {
+      lastPos.value = { x: e.x, y: e.y };
+    })
+    .onUpdate((e) => {
+      const d = Math.sqrt(Math.pow(e.x - lastPos.value.x, 2) + Math.pow(e.y - lastPos.value.y, 2));
+      distance.value += d;
+      lastPos.value = { x: e.x, y: e.y };
+
+      if (distance.value >= 30) {
+        distance.value = 0;
+        runOnJS(handleRub)();
+      }
+    });
 
   return (
     <GameStep
@@ -113,38 +133,32 @@ export default function Step01() {
             style={{ position: 'absolute', ...scene.interactZone }}
             onPress={handleAction}
             activeOpacity={0.6}
-          >
-            {/* Pulsing indicator removed */}
-          </TouchableOpacity>
+          />
         )}
         {scene.interactZone && scene.interactType === 'rub' && (
-          <View
-            style={{ position: 'absolute', ...scene.interactZone }}
-            onStartShouldSetResponder={() => true}
-            onResponderMove={handleRub}
-          >
-            {/* Pulsing indicator removed */}
-            {/* Rub progress bar */}
-            <View style={{
-              // Keep this above the bottom instruction panel so it never covers text.
-              position: 'absolute', bottom: 140, left: '20%', right: '20%',
-              height: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 3,
-            }}>
-              <View style={{
-                height: 6, backgroundColor: '#4ADE80', borderRadius: 3,
-                width: `${Math.min(rubProgress * 8, 100)}%`,
-              }} />
-            </View>
-          </View>
+          <GestureDetector gesture={panGesture}>
+            <Animated.View
+              style={{ position: 'absolute', ...scene.interactZone, zIndex: 10, backgroundColor: 'transparent' }}
+            />
+          </GestureDetector>
         )}
       </View>
 
-      {/* Center badge removed - now in GameStep */}
-      <View pointerEvents="none" style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      {/* Center badge removed - now in GameStep, but we'll show progress here */}
+      <View pointerEvents="none" style={{ flex: 1, justifyContent: 'center', alignItems: 'center', zIndex: 20 }}>
       </View>
 
       {/* Bottom instruction panel */}
       <View pointerEvents="box-none" style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
+        {scene.interactType === 'rub' && !isDone && (
+          <Animated.View entering={ZoomIn} style={{ alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 13, letterSpacing: 2, marginBottom: 8, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }}>DUSTING BED...</Text>
+            <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, width: 200, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3 }}>
+              <View style={{ height: 6, backgroundColor: '#4ADE80', borderRadius: 3, width: `${Math.min((rubProgress / 13) * 100, 100)}%` }} />
+            </View>
+          </Animated.View>
+        )}
+
         <Animated.View
           key={`instr-${sceneIndex}`}
           entering={SlideInRight.duration(400)}

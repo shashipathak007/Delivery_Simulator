@@ -104,7 +104,14 @@ export default function Step12() {
           onDrop={handleDrop} 
           onProximity={handleProximity} 
           position="top" 
-        />
+        >
+          <View style={{ alignItems: 'center', justifyContent: 'center', padding: 8, marginBottom: 8, marginLeft: 16 }}>
+             <View style={{ borderRadius: 16, width: 64, height: 64, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+               <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 20 }}>{rubCount}/5</Text>
+             </View>
+             <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 4, fontWeight: 'bold', textAlign: 'center' }}>Rubs</Text>
+          </View>
+        </ItemTray>
       )}
     >
       {/* Tap-anywhere interaction for RUB BACK and TAP FEET (keeps header usable) */}
@@ -124,27 +131,15 @@ export default function Step12() {
             </View>
           </View>
         )}
-        {sceneIndex === 1 && (
-          <Animated.View entering={ZoomIn} style={{ backgroundColor: 'rgba(37,99,235,0.9)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 2, borderColor: '#93C5FD' }}>
-            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 28, letterSpacing: 2 }}>{rubCount} / 5</Text>
-            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 4 }}>Rubs</Text>
-          </Animated.View>
-        )}
         {sceneIndex === 2 && (
           <Animated.View entering={ZoomIn} style={{ backgroundColor: 'rgba(236,72,153,0.9)', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20, borderWidth: 2, borderColor: '#F9A8D4' }}>
             <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 28, letterSpacing: 2 }}>{tapCount} / 5</Text>
             <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11, textAlign: 'center', marginTop: 4 }}>Taps</Text>
           </Animated.View>
         )}
-        {isDone && (
-          <Animated.View entering={BounceIn} style={{ backgroundColor: 'rgba(16,185,129,0.95)', paddingHorizontal: 32, paddingVertical: 20, borderRadius: 28, borderWidth: 2, borderColor: '#A7F3D0', shadowColor: '#10B981', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.6, shadowRadius: 20, alignItems: 'center' }}>
-            <Text style={{ color: '#A7F3D0', fontWeight: '800', fontSize: 12, letterSpacing: 3, marginBottom: 4 }}>STEP COMPLETE</Text>
-            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 22, letterSpacing: 2 }}>BREATHING</Text>
-          </Animated.View>
-        )}
       </View>
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
-        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 14 }}>
+        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 22 }}>
           <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>
         </Animated.View>
         {scene.actionLabel && !isScreenTapInteractive && (

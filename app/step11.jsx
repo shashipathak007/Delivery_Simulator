@@ -37,7 +37,7 @@ export default function Step11() {
 
   const handleAction = useCallback(() => {
     if (transitioning || isDone) return;
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) { }
     setTransitioning(true);
     addScore(50);
     if (scene.isDryStep) { setSceneIndex(2); startDrying(); return; }
@@ -55,22 +55,9 @@ export default function Step11() {
             </View>
           </Animated.View>
         )}
-        {isDone && (
-          <Animated.View entering={BounceIn} style={{ 
-            backgroundColor: 'rgba(236,72,153,0.95)', 
-            paddingHorizontal: 36, paddingVertical: 20, 
-            borderRadius: 28, 
-            borderWidth: 2, borderColor: '#F9A8D4', 
-            shadowColor: '#EC4899', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.6, shadowRadius: 20, 
-            alignItems: 'center' 
-          }}>
-            <Text style={{ color: '#F9A8D4', fontWeight: '800', fontSize: 12, letterSpacing: 3, marginBottom: 4 }}>HEALTHY SIGN</Text>
-            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 22, letterSpacing: 1 }}>BABY CRYING</Text>
-          </Animated.View>
-        )}
       </View>
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
-        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 14 }}>
+        <Animated.View key={`instr-${sceneIndex}`} entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', marginBottom: 22 }}>
           <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>{scene.instruction}</Text>
         </Animated.View>
         {scene.actionLabel && (

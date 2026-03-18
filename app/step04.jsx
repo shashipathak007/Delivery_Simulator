@@ -21,12 +21,12 @@ const { width, height } = Dimensions.get('window');
 
 const ITEMS_TO_COLLECT = [
   { id: '1', name: 'Plastic Sheet', source: require('../assets/images/plastic.png') },
-  { id: '2', name: 'Towels', source: require('../assets/images/towel.png') },
+  { id: '2', name: '3/4 Towels', source: require('../assets/images/towel.png') },
   { id: '3', name: 'Soap', source: require('../assets/images/soap.png') },
   { id: '4', name: 'Scissors', source: require('../assets/images/scissors.png') },
   { id: '5', name: 'String', source: require('../assets/images/string.jpg') },
   { id: '6', name: 'Blanket', source: require('../assets/images/blanket.png') },
-  { id: '7', name: 'Warm Water', source: require('../assets/images/warm_bowl.png') },
+  { id: '7', name: 'Water', source: require('../assets/images/warm_bowl.png') },
   { id: '8', name: 'Gloves', source: require('../assets/images/gloves.png') }
 ];
 

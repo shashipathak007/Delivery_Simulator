@@ -199,7 +199,7 @@ export default function Step03() {
       {/* Center */}
       <View style={{ flex: 1 }} pointerEvents="none">
         {sceneIndex === 3 && (
-          <Animated.View entering={ZoomIn} style={{ position: 'absolute', top: 150, left: 0, right: 0, alignItems: 'center' }}>
+          <Animated.View entering={ZoomIn} style={{ position: 'absolute', top: 10, left: 0, right: 0, alignItems: 'center' }}>
             <View style={{ backgroundColor: 'rgba(37,99,235,0.9)', paddingHorizontal: 26, paddingVertical: 14, borderRadius: 20, borderWidth: 2, borderColor: '#93C5FD' }}>
               <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 14, letterSpacing: 2, textAlign: 'center' }}>SANITIZING...</Text>
               <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, marginTop: 10, width: 220 }}>
@@ -213,22 +213,26 @@ export default function Step03() {
       {/* Bottom */}
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }} pointerEvents="box-none">
         <Animated.View
-          key={`instr-${sceneIndex}`}
-          entering={SlideInRight.duration(400)}
-          style={{
-            backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 20,
-            borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)',
-            marginBottom: scene.actionLabel ? 14 : 0,
-          }}
-          pointerEvents="none"
-        >
+  key={`instr-${sceneIndex}`}
+  entering={SlideInRight.duration(400)}
+  style={{
+  position: 'relative',
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  borderRadius: 24,
+  padding: 20,
+  borderWidth: 1.5,
+  borderColor: 'rgba(255,255,255,0.15)',
+  marginBottom: scene.actionLabel ? 14 : 0,
+}}
+  pointerEvents="none"
+>
           <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', lineHeight: 26 }}>
             {scene.instruction}
           </Text>
         </Animated.View>
 
         {scene.actionLabel && (
-          <Animated.View entering={FadeInUp.delay(200).duration(400)}>
+          <Animated.View entering={FadeInUp.delay(200).duration(400)} style={{ zIndex: 10 }}>
             <TouchableOpacity onPress={handleAction} disabled={transitioning} activeOpacity={0.85}
               style={{
                 backgroundColor: transitioning ? '#6B7280' : '#2563EB', borderRadius: 18, paddingVertical: 18,

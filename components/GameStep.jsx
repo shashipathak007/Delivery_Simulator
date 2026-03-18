@@ -35,6 +35,7 @@ export default function GameStep({
   backgroundColor = '#0A1628',
   children,           // Main content (center + bottom)
   topContent = null,  // Optional top content (like ItemTray)
+  transitionDuration = 800, // Duration for scene cross-fades
 }) {
   const zoomShared = useSharedValue(0);
   const insets = useSafeAreaInsets();
@@ -64,8 +65,8 @@ export default function GameStep({
         i === sceneIndex && (
           <Animated.View
             key={s.id}
-            entering={FadeIn.duration(800)}
-            exiting={FadeOut.duration(800)}
+            entering={FadeIn.duration(transitionDuration)}
+            exiting={FadeOut.duration(transitionDuration)}
             style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }, animatedBackgroundStyle]}
           >
             <ImageBackground
@@ -110,7 +111,7 @@ export default function GameStep({
               position: 'absolute',
               left: 0,
               right: 0,
-              top: insets.top + 118,
+              top: insets.top + 87,
               alignItems: 'center',
               zIndex: 100,
             }}
