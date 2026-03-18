@@ -26,6 +26,8 @@ export default function Step15() {
   const scene = SCENE_PROGRESSION[sceneIndex];
   const isDone = sceneIndex === 2;
 
+  const massageCountRef = useRef(0);
+
   const onMassageComplete = useCallback(() => {
     setTransitioning(true);
     setTimeout(() => {
@@ -36,16 +38,18 @@ export default function Step15() {
   }, [markStepComplete]);
 
   const incrementMassage = useCallback(() => {
-    setMassageCount(prev => {
-      const next = prev + 1;
-      addScore(10);
-      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { }
-      if (next >= 20) { // Increased to 20 for drag feel, adjust if needed
-        runOnJS(onMassageComplete)();
-      }
-      return next;
-    });
-  }, [addScore, onMassageComplete]);
+    if (transitioning || sceneIndex !== 1) return;
+
+    const newCount = Math.min(massageCountRef.current + 1, 20);
+    massageCountRef.current = newCount;
+    setMassageCount(newCount);
+    addScore(10);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { }
+    
+    if (newCount >= 20) {
+      onMassageComplete();
+    }
+  }, [transitioning, sceneIndex, addScore, onMassageComplete]);
 
   const panGesture = Gesture.Pan()
     .enabled(sceneIndex === 1 && !transitioning)

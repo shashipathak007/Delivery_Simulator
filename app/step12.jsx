@@ -51,7 +51,7 @@ export default function Step12() {
     rubCountRef.current = n;
     setRubCount(n);
     addScore(10);
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch(e) {}
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { }
 
     if (n >= RUB_THRESHOLD) {
       setTransitioning(true);
@@ -101,39 +101,39 @@ export default function Step12() {
 
   const handleAction = useCallback(() => {
     if (transitioning || isDone) return;
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-    
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { }
+
     // Scene 0: button press to start rubbing
-    if (sceneIndex === 0) { 
-      setTransitioning(true); 
-      setTimeout(() => { setSceneIndex(1); setTransitioning(false); }, 300); 
-      return; 
+    if (sceneIndex === 0) {
+      setTransitioning(true);
+      setTimeout(() => { setSceneIndex(1); setTransitioning(false); }, 300);
+      return;
     }
-    
+
     // Scene 2: tap feet
     if (sceneIndex === 2) {
-      const n = tapCount + 1; 
-      setTapCount(n); 
+      const n = tapCount + 1;
+      setTapCount(n);
       addScore(10);
-      if (n >= 5) { 
-        setTransitioning(true); 
-        setTimeout(() => { 
-          setSceneIndex(3); 
-          setTransitioning(false); 
-          setTimeout(() => markStepComplete(12), 1500); 
-        }, 300); 
+      if (n >= 5) {
+        setTransitioning(true);
+        setTimeout(() => {
+          setSceneIndex(3);
+          setTransitioning(false);
+          setTimeout(() => markStepComplete(12), 1500);
+        }, 300);
       }
       return;
     }
   }, [sceneIndex, transitioning, isDone, tapCount]);
 
   return (
-    <GameStep 
-      step={12} 
-      score={score} 
-      scenes={SCENE_PROGRESSION} 
-      sceneIndex={sceneIndex} 
-      isDone={isDone} 
+    <GameStep
+      step={12}
+      score={score}
+      scenes={SCENE_PROGRESSION}
+      sceneIndex={sceneIndex}
+      isDone={isDone}
       showConfetti={isDone}
     >
       {/* Tap-anywhere interaction for TAP FEET */}
@@ -147,41 +147,42 @@ export default function Step12() {
 
       {/* Towel rubbing interaction zone */}
       {sceneIndex === 1 && (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 15 }} pointerEvents="box-none">
+        <View style={{ position: 'absolute', top: insets.top - 45, left: 0, right: 0, bottom: 0, zIndex: 15 }} pointerEvents="box-none">
+          {/* Stationary tray container */}
+          <View style={{
+            width: '100%',
+            backgroundColor: 'rgba(31, 41, 55, 0.95)',
+            paddingVertical: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: 'rgba(255,255,255,0.1)',
+            shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 15,
+            alignItems: 'center',
+          }}>
+            {/* The empty placeholder slot - transparent so nothing is visible underneath */}
+            <View style={{ width: 64, height: 64 }} />
+            <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 4, fontWeight: 'bold' }}>Towel</Text>
+          </View>
+
+          {/* Draggable Towel */}
           <GestureDetector gesture={panGesture}>
             <Animated.View style={[{
               position: 'absolute',
-              top: insets.top + 90,
-              left: width * 0.5 - 60,
-              width: 120,
-              height: 120,
+              top: 12,
+              alignSelf: 'center',
               alignItems: 'center',
               justifyContent: 'center',
             }, towelAnimatedStyle]}>
               <View style={{
-                width: 100,
-                height: 100,
-                borderRadius: 20,
-                backgroundColor: 'rgba(255,255,255,0.15)',
-                borderWidth: 2,
-                borderColor: 'rgba(255,255,255,0.3)',
-                borderStyle: 'dashed',
-                alignItems: 'center',
-                justifyContent: 'center',
-                shadowColor: '#fff',
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.2,
-                shadowRadius: 10,
+                width: 64, height: 64, borderRadius: 16,
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+                alignItems: 'center', justifyContent: 'center',
+                shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4,
               }}>
-                <Image
-                  source={require('../assets/images/towel.png')}
-                  style={{ width: 64, height: 64 }}
-                  resizeMode="contain"
-                />
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', marginTop: 4, textAlign: 'center' }}>
-                  Rub to stimulate
-                </Text>
+                <Image source={require('../assets/images/towel.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
               </View>
+              {/* Invisible spacer text to keep formatting aligned with the stationary tray */}
+              <Text style={{ color: 'transparent', fontSize: 12, marginTop: 4, fontWeight: 'bold' }}>Towel</Text>
             </Animated.View>
           </GestureDetector>
         </View>
