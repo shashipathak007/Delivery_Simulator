@@ -212,7 +212,7 @@ export default function Step03() {
 
       {/* Bottom */}
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }} pointerEvents="box-none">
-        <Animated.View
+        <Animated.View 
   key={`instr-${sceneIndex}`}
   entering={SlideInRight.duration(400)}
   style={{
@@ -223,6 +223,7 @@ export default function Step03() {
   borderWidth: 1.5,
   borderColor: 'rgba(255,255,255,0.15)',
   marginBottom: scene.actionLabel ? 14 : 0,
+  
 }}
   pointerEvents="none"
 >

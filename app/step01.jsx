@@ -9,6 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import GameStep from '../components/GameStep';
+import GlitterEffect from '../components/GlitterEffect';
 import { useGame } from '../context/GameContext';
 
 const { width, height } = Dimensions.get('window');
@@ -126,6 +127,9 @@ export default function Step01() {
       statusTitle="ROOM READY"
       statusDetail="SAFE & WARM"
     >
+      {/* Glitter effect when bed is cleaned */}
+      {isDone && <GlitterEffect count={40} />}
+
       {/* Interaction Zones — rendered over images */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 5 }} pointerEvents="box-none">
         {scene.interactZone && scene.interactType === 'tap' && (

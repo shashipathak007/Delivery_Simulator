@@ -50,6 +50,7 @@ const SCENE_PROGRESSION = [
   {
     id: 'supported',
     image: require('../assets/images/Towel_UnderBabyHead.png'),
+    resizeMode: 'contain',
     instruction: 'Towel placed! Head is supported and cushioned.',
   },
 ];

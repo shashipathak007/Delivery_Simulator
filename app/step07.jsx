@@ -1,16 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity, ImageBackground } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, {
   SlideInRight,
   useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, Easing,
-  runOnJS, FadeIn, FadeOut
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import GameStep from '../components/GameStep';
 import { useGame } from '../context/GameContext';
 
-const INHALE_IMAGE = require('../assets/images/Inhale.png');
-const EXHALE_IMAGE = require('../assets/images/Exhale.png');
 const BASE_IMAGE = require('../assets/images/Pregnent_Mother_In_Bed.jpg');
 
 export default function Step07() {
@@ -22,56 +19,62 @@ export default function Step07() {
   const ringScale = useSharedValue(1);
   const ringOpacity = useSharedValue(0.2);
 
-  // Use a FIXED id so GameStep never triggers fade transitions between images.
-  // We handle the image swap ourselves with a layered approach below.
-  const scenes = useMemo(() => {
-    return [{ id: 'breathing', image: BASE_IMAGE }];
-  }, []);
+  const scenes = useMemo(() => [{ id: 'breathing', image: BASE_IMAGE }], []);
 
   const handleBreathingComplete = useCallback(() => {
     addScore(100);
     setTimeout(() => markStepComplete(7), 1500);
   }, [addScore, markStepComplete]);
 
-  const updatePhase = (phase) => {
-    setBreathePhase(phase);
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { }
-  };
-  
-  const incrementCycle = () => {
-    setCycles(p => p + 1);
-  };
-
   const startBreathing = () => {
     if (isBreathing) return;
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) { }
+
     setIsBreathing(true);
     setBreathePhase('in');
 
+    const cycleDuration = 4000;
+
+    const runCycle = (cycleCount) => {
+      if (cycleCount >= 3) {
+        handleBreathingComplete();
+        return;
+      }
+
+      // Switch to EXHALE exactly when inhale ends — no gap
+      setTimeout(() => {
+        setBreathePhase('out');
+        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { }
+      }, cycleDuration);
+
+      // Switch back to INHALE exactly when exhale ends — no gap
+      setTimeout(() => {
+        const next = cycleCount + 1;
+        setCycles(next);
+        if (next < 3) {
+          setBreathePhase('in');
+          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { }
+        }
+        runCycle(next);
+      }, cycleDuration * 2);
+    };
+
+    runCycle(0);
+
+    // Ring expands on inhale, contracts on exhale
     ringScale.value = withRepeat(
       withSequence(
-        withTiming(1.6, { duration: 4000, easing: Easing.inOut(Easing.ease) }, (finished) => {
-          if (finished) runOnJS(updatePhase)('out');
-        }),
-        withTiming(1, { duration: 4000, easing: Easing.inOut(Easing.ease) }, (finished) => {
-          if (finished) {
-            runOnJS(updatePhase)('in');
-            runOnJS(incrementCycle)();
-          }
-        })
+        withTiming(1.6, { duration: cycleDuration, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.0, { duration: cycleDuration, easing: Easing.inOut(Easing.ease) })
       ),
       3,
-      false,
-      (finished) => {
-        'worklet';
-        if (finished) runOnJS(handleBreathingComplete)();
-      }
+      false
     );
 
     ringOpacity.value = withRepeat(
       withSequence(
-        withTiming(0.6, { duration: 4000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.2, { duration: 4000, easing: Easing.inOut(Easing.ease) })
+        withTiming(0.6, { duration: cycleDuration, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.2, { duration: cycleDuration, easing: Easing.inOut(Easing.ease) })
       ),
       3,
       false
@@ -85,43 +88,50 @@ export default function Step07() {
 
   const isDone = cycles >= 3;
 
-  // Determine which image to show based on phase
-  const showInhale = breathePhase === 'in';
-  const showExhale = breathePhase === 'out';
+  const phaseColor = breathePhase === 'in'
+    ? '#3B82F6'   // blue for inhale
+    : breathePhase === 'out'
+      ? '#8B5CF6' // purple for exhale
+      : '#2563EB'; // default
+
+  const phaseBorder = breathePhase === 'out' ? '#DDD6FE' : '#BFDBFE';
+  const phaseShadow = breathePhase === 'out' ? '#8B5CF6' : '#3B82F6';
+  const ringColor = breathePhase === 'out'
+    ? 'rgba(139,92,246,0.45)'
+    : 'rgba(96,165,250,0.45)';
 
   return (
-    <GameStep 
-      step={7} 
-      score={score} 
-      scenes={scenes} 
-      sceneIndex={0} 
-      isDone={isDone} 
+    <GameStep
+      step={7}
+      score={score}
+      scenes={scenes}
+      sceneIndex={0}
+      isDone={isDone}
       showConfetti={isDone}
       transitionDuration={0}
     >
-      {/* Layered breathing images — both always mounted, opacity swapped instantly */}
-      {isBreathing && (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2 }} pointerEvents="none">
-          {/* Inhale image layer */}
-          <ImageBackground
-            source={INHALE_IMAGE}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: showInhale ? 1 : 0 }}
-            resizeMode="cover"
-          />
-          {/* Exhale image layer */}
-          <ImageBackground
-            source={EXHALE_IMAGE}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: showExhale ? 1 : 0 }}
-            resizeMode="cover"
-          />
-        </View>
-      )}
-
-      {/* Place START button below header (not centered) */}
       <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', paddingTop: 0 }} pointerEvents="box-none">
         {!isDone && (
-          <View style={{ width: 180, height: 180, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center' }}>
+
+            {/* Outer animated ring */}
             <Animated.View
+              pointerEvents="none"
+              style={[
+                animatedRingStyle,
+                {
+                  position: 'absolute',
+                  width: 180,
+                  height: 180,
+                  borderRadius: 90,
+                  backgroundColor: ringColor,
+                },
+              ]}
+            />
+
+            {/* Second softer ring for depth */}
+            <Animated.View
+              pointerEvents="none"
               style={[
                 animatedRingStyle,
                 {
@@ -129,57 +139,92 @@ export default function Step07() {
                   width: 160,
                   height: 160,
                   borderRadius: 80,
-                  backgroundColor: 'rgba(96,165,250,0.45)',
+                  backgroundColor: ringColor,
+                  opacity: 0.3,
                 },
               ]}
-              pointerEvents="none"
             />
 
+            {/* Main circle button */}
             <TouchableOpacity
               onPress={startBreathing}
               disabled={isBreathing}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               style={{
-                width: 130,
-                height: 130,
-                borderRadius: 65,
-                backgroundColor: isBreathing
-                  ? (breathePhase === 'in' ? '#3B82F6' : '#8B5CF6')
-                  : '#2563EB',
+                width: 140,
+                height: 140,
+                borderRadius: 70,
+                backgroundColor: phaseColor,
                 borderWidth: 4,
-                borderColor: breathePhase === 'out' ? '#DDD6FE' : '#BFDBFE',
-                shadowColor: breathePhase === 'out' ? '#8B5CF6' : '#3B82F6',
+                borderColor: phaseBorder,
+                shadowColor: phaseShadow,
                 shadowOffset: { width: 0, height: 8 },
                 shadowOpacity: 0.5,
                 shadowRadius: 15,
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: '900', letterSpacing: 2, textAlign: 'center' }}>
-                  {breathePhase === 'tap' ? 'START' : breathePhase === 'in' ? 'INHALE' : 'EXHALE'}
+              <Text style={{
+                color: '#FFFFFF',
+                fontSize: breathePhase === 'tap' ? 20 : 22,
+                fontWeight: '900',
+                letterSpacing: 2,
+                textAlign: 'center',
+              }}>
+                {breathePhase === 'tap' ? 'START' : breathePhase === 'in' ? 'INHALE' : 'EXHALE'}
+              </Text>
+
+              {isBreathing && (
+                <Text style={{
+                  color: '#E0F2FE',
+                  fontSize: 12,
+                  fontWeight: '800',
+                  textAlign: 'center',
+                  marginTop: 4,
+                }}>
+                  {Math.min(cycles + 1, 3)}/3
                 </Text>
-                {isBreathing && (
-                  <Text style={{ color: '#E0F2FE', fontSize: 12, fontWeight: '800', textAlign: 'center' }}>
-                    CYCLE {Math.min(cycles + 1, 3)}/3
-                  </Text>
-                )}
-              </View>
+              )}
             </TouchableOpacity>
           </View>
         )}
       </View>
 
+      {/* Instruction card */}
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
-        <Animated.View entering={SlideInRight.duration(400)} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24, padding: 22, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)' }}>
-          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', textAlign: 'center', letterSpacing: 1, marginBottom: 10 }}>
+        <Animated.View
+          entering={SlideInRight.duration(400)}
+          style={{
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            borderRadius: 24,
+            padding: 22,
+            borderWidth: 1.5,
+            borderColor: 'rgba(255,255,255,0.15)',
+          }}
+        >
+          <Text style={{
+            color: '#FFFFFF',
+            fontSize: 18,
+            fontWeight: '900',
+            textAlign: 'center',
+            letterSpacing: 1,
+            marginBottom: 10,
+          }}>
             GUIDED BREATHING
           </Text>
-          <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, fontWeight: '600', textAlign: 'center', lineHeight: 22 }}>
+          <Text style={{
+            color: 'rgba(255,255,255,0.8)',
+            fontSize: 15,
+            fontWeight: '600',
+            textAlign: 'center',
+            lineHeight: 22,
+          }}>
             {breathePhase === 'in'
               ? '🫁 Breathe IN slowly… expand your lungs.'
               : breathePhase === 'out'
                 ? '💨 Breathe OUT gently… release the tension.'
-                : 'Breathe slowly with the circle to manage pain.'}
+                : 'Tap START and breathe with the circle to manage pain.'}
           </Text>
         </Animated.View>
       </View>
