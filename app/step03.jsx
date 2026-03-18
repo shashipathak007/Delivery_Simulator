@@ -70,21 +70,21 @@ const PulsingIndicator = () => {
     opacity: opacity.value,
   }));
 
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
-      <Animated.View style={[{
-        position: 'absolute', width: 80, height: 80, borderRadius: 40,
-        backgroundColor: 'rgba(56,189,248,0.3)',
-      }, animStyle]} />
-      <View style={{
-        width: 40, height: 40, borderRadius: 20,
-        backgroundColor: 'rgba(56,189,248,0.85)',
-        justifyContent: 'center', alignItems: 'center',
-      }}>
-        <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#FFF' }} />
-      </View>
-    </View>
-  );
+  // return (
+  //   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="none">
+  //     <Animated.View style={[{
+  //       position: 'absolute', width: 80, height: 80, borderRadius: 40,
+  //       backgroundColor: 'rgba(56,189,248,0.3)',
+  //     }, animStyle]} />
+  //     <View style={{
+  //       width: 40, height: 40, borderRadius: 20,
+  //       backgroundColor: 'rgba(56,189,248,0.85)',
+  //       justifyContent: 'center', alignItems: 'center',
+  //     }}>
+  //       <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#FFF' }} />
+  //     </View>
+  //   </View>
+  // );
 };
 
 export default function Step03() {
