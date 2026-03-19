@@ -56,7 +56,7 @@ export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === STEP_ORDER.length - 1;
   const progress = ((currentIndex + 1) / STEP_ORDER.length) * 100;
-  
+
   const completed = isStepComplete(step);
 
   const handlePrevious = () => {
@@ -190,7 +190,7 @@ export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
           }}
         >
           <Pressable
-            onPress={() => {}}
+            onPress={() => { }}
             style={{
               backgroundColor: 'rgba(17,24,39,0.96)',
               borderRadius: 22,
