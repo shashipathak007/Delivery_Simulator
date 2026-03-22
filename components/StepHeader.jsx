@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert, Modal, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -78,19 +78,17 @@ export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
   };
 
   const handleNext = () => {
-    if (!completed) {
-      Alert.alert(
-        '⚠️ Step Not Complete!',
-        STEP_ALERTS[step] || 'Complete this step before moving on!',
-        [
-          { text: 'Keep Playing', style: 'cancel' },
-          { text: 'Skip Step', style: 'destructive', onPress: navigateToNext }
-        ]
-      );
-      return;
-    }
     navigateToNext();
   };
+
+  useEffect(() => {
+    if (completed) {
+      const timer = setTimeout(() => {
+        navigateToNext();
+      }, 3500); // Wait for confetti before auto-navigating
+      return () => clearTimeout(timer);
+    }
+  }, [completed]);
 
   return (
     <SafeAreaView edges={['top']} style={{ paddingHorizontal: 12, paddingTop: 4 }}>
@@ -131,19 +129,19 @@ export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
           </View>
         </View>
 
-        {/* Next button */}
+        {/* Skip button always available */}
         <TouchableOpacity
           onPress={handleNext}
           activeOpacity={0.7}
           style={{
             flexDirection: 'row', alignItems: 'center',
-            backgroundColor: completed ? '#10B981' : '#F59E0B',
+            backgroundColor: '#F59E0B',
             paddingHorizontal: 14, paddingVertical: 10, borderRadius: 30,
             shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4,
           }}
         >
           <Text style={{ fontWeight: '800', color: '#FFFFFF', fontSize: 12, letterSpacing: 0.5 }}>
-            {isLast ? 'FINISH' : 'NEXT'}
+            SKIP
           </Text>
           <MaterialCommunityIcons name="chevron-right" size={18} color="#FFFFFF" />
         </TouchableOpacity>
@@ -218,4 +216,3 @@ export default function StepHeader({ step, totalSteps = 17, score = 0 }) {
     </SafeAreaView>
   );
 }
-

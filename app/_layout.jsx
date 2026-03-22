@@ -11,8 +11,15 @@ export default function Layout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <GameProvider>
           <InventoryProvider>
-            <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
-              <Stack.Screen name="index" />
+            <Stack screenOptions={{
+              headerShown: false,
+              animation: 'slide_from_right',
+              animationDuration: 350,
+              gestureEnabled: true,
+              gestureDirection: 'horizontal',
+              contentStyle: { backgroundColor: '#0A1628' },
+            }}>
+              <Stack.Screen name="index" options={{ animation: 'fade' }} />
               <Stack.Screen name="step01" />
               <Stack.Screen name="step02" />
               <Stack.Screen name="step03" />
@@ -30,7 +37,7 @@ export default function Layout() {
               <Stack.Screen name="step15" />
               <Stack.Screen name="step16" />
               <Stack.Screen name="step17" />
-              <Stack.Screen name="complete" />
+              <Stack.Screen name="complete" options={{ animation: 'fade', gestureEnabled: false }} />
             </Stack>
           </InventoryProvider>
         </GameProvider>
