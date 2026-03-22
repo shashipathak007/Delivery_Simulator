@@ -14,7 +14,7 @@ import { useGame } from '../context/GameContext';
 const { width, height } = Dimensions.get('window');
 
 const TRAY_ITEMS = [
-
+  
   { id: 'sanitizer', name: 'Sanitizer', type: 'image', icon: require('../assets/images/soap.png') },
   { id: 'gloves', name: 'Clean Gloves', type: 'image', icon: require('../assets/images/gloves.png') },
 ];
@@ -53,7 +53,7 @@ const SCENE_PROGRESSION = [
     id: 'gloved',
     image: require('../assets/images/gloves on hand.png'),
     instruction: 'Gloves on! Hands are sterile.',
-  },
+  },  
 ];
 
 const PulsingIndicator = () => {
@@ -116,7 +116,7 @@ export default function Step03() {
 
   const handleAction = useCallback(() => {
     if (transitioning || isDone) return;
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) { }
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     setTransitioning(true);
     addScore(25);
     setTimeout(() => {
@@ -213,7 +213,7 @@ export default function Step03() {
       {/* Bottom */}
       <View style={{ paddingHorizontal: 20, paddingBottom: 50 }} pointerEvents="box-none">
         <View style={{ marginBottom: scene.actionLabel ? 20 : 0, zIndex: 1 }} pointerEvents="none">
-          <Animated.View
+          <Animated.View 
             key={`instr-${sceneIndex}`}
             entering={SlideInRight.duration(400)}
             style={{
