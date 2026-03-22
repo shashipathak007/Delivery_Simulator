@@ -29,7 +29,7 @@ const SCENE_PROGRESSION = [
   },
   {
     id: 'water_break',
-    image: require('../assets/images/MotherPushing.png'),
+    image: require('../assets/images/Waterbroke.jpeg'),
     instruction: 'Water bag breaks!\nThis is normal — it means the baby is coming soon.',
     actionLabel: 'CONTINUE',
     badge: '💧 WATER BREAKS',
